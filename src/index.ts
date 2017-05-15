@@ -1,43 +1,47 @@
 import * as Bluebird from "bluebird";
-import { IO } from "fp-ts/lib/IO";
 import * as pg from "pg";
 import getPool from "./getPool";
+import { BTask } from "./task";
 
-export type AssertMode = "any" | "none" | "one" | "oneOrMany" | "oneOrNone";
-export type QueryIO = (query: pg.QueryConfig, txOpts?: TxOptions) => IO<Bluebird<QueryResponse>>;
-export type Query = (query: pg.QueryConfig, txOpts?: TxOptions) => Bluebird<QueryResponse>;
+export type DbResponseTransformer = (result: DbResponse) => QueryResponse;
 export type QueryResponse = void | any | any[];
-export type TaskFn = (tx: pg.Client) => Bluebird<any>;
-export type TaskIO = (tx: pg.Client) => IO<Bluebird<any>>;
+
+export type Query = (query: pg.QueryConfig, txOpts?: TxOptions) => QueryResponse;
+export type QueryTask = (query: pg.QueryConfig, txOpts?: TxOptions) => BTask<QueryResponse>;
+
+export type TransactionScope = (tx: pg.Client) => Bluebird<any>;
+
+export interface Transaction {
+  (x: TransactionScope, y?: null): Bluebird<any>;
+  (x: TxOptions, y: TransactionScope): Bluebird<any>;
+}
+
+export interface TransactionTask {
+  (x: TransactionScope, y?: null): BTask<any>;
+  (x: TxOptions, y: TransactionScope): BTask<any>;
+}
+
 export type TxIsolationLevel = "READ UNCOMMITTED" | "READ COMMITTED" | "REPEATABLE READ" | "SERIALIZABLE";
 export type TypeParser<T> = (val: string) => T;
 
 export interface DbPool extends pg.Pool {
-  transaction?: Transactable;
-  transactionIO?: TransactableIO;
   any?: Query;
-  anyIO?: QueryIO;
+  anyTask?: QueryTask;
   none?: Query;
-  noneIO?: QueryIO;
+  noneTask?: QueryTask;
   one?: Query;
-  oneIO?: QueryIO;
+  oneTask?: QueryTask;
   oneOrMany?: Query;
-  oneOrManyIO?: QueryIO;
+  oneOrManyTask?: QueryTask;
   oneOrNone?: Query;
-  oneOrNoneIO?: QueryIO;
+  oneOrNoneTask?: QueryTask;
+
+  transaction?: Transaction;
+  transactionTask?: TransactionTask;
 }
+
 export interface DbResponse {
   rows: any[];
-}
-
-export interface Transactable {
-  (txOpts: TxOptions, fn: TaskFn): Bluebird<any>;
-  (txOpts: TaskFn, fn?: void): Bluebird<any>;
-}
-
-export interface TransactableIO {
-  (txOpts: TxOptions, fn: TaskIO): IO<Bluebird<any>>;
-  (txOpts: TaskIO, fn?: void): IO<Bluebird<any>>;
 }
 
 export interface PgType {
@@ -69,5 +73,7 @@ export const SQL = (parts: TemplateStringsArray, ...values: any[]) => ({
   text: parts.reduce((prev, curr, i) => `${prev}$${i}${curr}`),
   values,
 });
+
 export { default as parse } from "./utils/connection";
 export default getPool;
+export * from "./task";
