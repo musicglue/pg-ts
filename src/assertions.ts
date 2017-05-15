@@ -1,9 +1,11 @@
 import * as Bluebird from "bluebird";
 import camelcase = require("camelcase-keys");
+import { IO } from "fp-ts/lib/IO";
 import { get } from "lodash";
 import * as pg from "pg";
+import { QueryIO } from ".";
 
-import { DbPool, DbResponse, TxOptions, AssertMode } from ".";
+import { AssertMode, DbPool, DbResponse, TxOptions } from ".";
 
 const expectedNoneFoundSome = "Query returned rows but no rows were expected";
 const expectedOneManyFound = "Query returned many rows but one row was expected";
@@ -38,18 +40,29 @@ const assert = (mode: AssertMode) => (result: DbResponse): (void | any | any[]) 
   }
 };
 
-const testResp = (db: DbPool, mode: AssertMode) =>
-  (query: pg.QueryConfig, txOpts?: TxOptions): Bluebird<void | any | any[]> =>
-    Bluebird
-      .fromCallback(cb => get(txOpts, "tx", db).query(query, cb))
-      .then(assert(mode));
+const getAssertedQuery = (db: DbPool) => (mode: AssertMode) =>
+  (query: pg.QueryConfig, txOpts?: TxOptions): IO<Bluebird<void | any | any[]>> =>
+    new IO(() =>
+      Bluebird
+        .fromCallback(cb => get(txOpts, "tx", db).query(query, cb))
+        .then(assert(mode)));
+
+const unwrapQueryIO = (queryFn: QueryIO) =>
+  (query: pg.QueryConfig, txOpts?: TxOptions) => queryFn(query, txOpts).run();
 
 export default (db: DbPool): DbPool => {
-  db.any = testResp(db, "any");
-  db.none = testResp(db, "none");
-  db.one = testResp(db, "one");
-  db.oneOrMany = testResp(db, "oneOrMany");
-  db.oneOrNone = testResp(db, "oneOrNone");
+  const assertQuery = getAssertedQuery(db);
+  db.anyIO = assertQuery("any");
+  db.noneIO = assertQuery("none");
+  db.oneIO = assertQuery("one");
+  db.oneOrManyIO = assertQuery("oneOrMany");
+  db.oneOrNoneIO = assertQuery("oneOrNone");
+
+  db.any = unwrapQueryIO(db.anyIO);
+  db.none = unwrapQueryIO(db.noneIO);
+  db.one = unwrapQueryIO(db.oneIO);
+  db.oneOrMany = unwrapQueryIO(db.oneOrManyIO);
+  db.oneOrNone = unwrapQueryIO(db.oneOrNoneIO);
 
   return db;
 };
