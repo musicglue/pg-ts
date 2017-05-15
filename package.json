@@ -8,7 +8,8 @@
   "author": "Music Glue",
   "license": "MIT",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "prepublish": "npm run build"
   },
   "dependencies": {
     "bluebird": "^3.5.0",
