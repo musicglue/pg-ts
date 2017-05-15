@@ -26,12 +26,12 @@ pool.transaction(tx =>
     .then(([,person]) => person));
 ```
 
-Using fp-ts IOs:
+Using fp-ts BTasks:
 
 ```ts
 import getPool, { SQL } from "pg-ts";
 
 const pool = getPool();
 
-pool.oneIO(SQL`SELECT * FROM people WHERE first_name = ${firstName})`).run();
+pool.oneTask(SQL`SELECT * FROM people WHERE first_name = ${firstName})`).run();
 ```
