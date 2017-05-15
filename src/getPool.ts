@@ -1,11 +1,20 @@
 import * as Bluebird from "bluebird";
 import { get } from "lodash";
 import * as pg from "pg";
-
-import { IO } from "fp-ts/lib/IO";
-import { DbPool, PoolConfig, TaskFn, TaskIO, TransactableIO, TxIsolationLevel, TxOptions } from ".";
 import setupPoolAssertions from "./assertions";
 import setupPoolEvents from "./events";
+
+import {
+  BTask,
+  DbPool,
+  PoolConfig,
+  Transaction,
+  TransactionScope,
+  TransactionTask,
+  TxIsolationLevel,
+  TxOptions,
+} from "./index";
+
 import setupParsers from "./parsing";
 
 pg.defaults.poolSize = parseInt(process.env.PG_POOL_SIZE || 10, 10);
@@ -29,50 +38,48 @@ const getIsolationStatement = (txOpts?: TxOptions): string => {
 const commit = (tx: pg.Client) => () => tx.query("COMMIT;");
 const rollback = (tx: pg.Client) => (err: Error) => tx.query("ROLLBACK;").then(() => Bluebird.reject(err));
 
-const transactionIO = (pool: pg.Pool): TransactableIO => {
+const transaction = (pool: DbPool): Transaction => {
   return t;
 
-  function t(txOpts: TaskIO, fn?: null): IO<Bluebird<any>>;
-  function t(txOpts: TxOptions, fn: TaskIO): IO<Bluebird<any>> {
-    const opts = typeof txOpts === "function" ? defaultTxOptions : txOpts;
-    const task = typeof txOpts === "function" ? txOpts : fn;
+  function t(x: TransactionScope, y?: null): Bluebird<any>;
+  function t(x: TxOptions, y: TransactionScope): Bluebird<any> {
+    const opts = typeof x === "function" ? defaultTxOptions : x;
+    const fn = typeof x === "function" ? x : y;
 
-    if (opts.tx) { return task(opts.tx); }
+    return Bluebird
+      .using((pool as any)._connect(), (tx: pg.Client): Bluebird<any> => {
+        const opening = ["BEGIN TRANSACTION", getIsolationStatement(opts)];
 
-    return new IO(() =>
-      Bluebird
-        .using((pool as any)._connect(), (tx: pg.Client): Bluebird<any> => {
-          const opening = ["BEGIN TRANSACTION", getIsolationStatement(opts)];
-          if (opts.readOnly) { opening.push("READ ONLY"); }
-          if (opts.deferrable) { opening.push("DEFERRABLE"); }
+        if (opts.readOnly) { opening.push("READ ONLY"); }
+        if (opts.deferrable) { opening.push("DEFERRABLE"); }
 
-          return Bluebird
-            .try(() => Bluebird.resolve(tx.query(opening.join(" "))))
-            .then(() => task(tx))
-            .tap(commit(tx))
-            .catch(rollback(tx));
-        }));
+        return Bluebird
+          .try(() => Bluebird.resolve(tx.query(opening.join(" "))))
+          .then(() => fn(tx))
+          .tap(commit(tx))
+          .catch(rollback(tx));
+      });
   }
 };
 
-const unwrapTransactionIO = (transactable: TransactableIO) => {
+const transactionTask = (pool: DbPool): TransactionTask => {
   return t;
 
-  function t(txOpts: TaskFn, fn?: null): Bluebird<any>;
-  function t(txOpts: TxOptions, fn: TaskFn): Bluebird<any> {
-    return (typeof txOpts === "function")
-      ? transactable(tx => new IO(() => txOpts(tx))).run()
-      : transactable(txOpts, tx => new IO(() => fn(tx))).run();
+  function t(x: TransactionScope, y?: null): BTask<any>;
+  function t(x: TxOptions, y: TransactionScope): BTask<any> {
+    return new BTask(() => transaction(pool)(x, y));
   }
 };
 
 export default (config: PoolConfig): DbPool => {
   const pool: DbPool = new pg.Pool(config);
+
   setupParsers(pool, config.parsers);
   setupPoolEvents(pool);
   setupPoolAssertions(pool);
-  pool.transactionIO = transactionIO(pool);
-  pool.transaction = unwrapTransactionIO(pool.transactionIO);
+
+  pool.transaction = transaction(pool);
+  pool.transactionTask = transactionTask(pool);
 
   return pool;
 };
