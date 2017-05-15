@@ -1,27 +1,43 @@
 import * as Bluebird from "bluebird";
+import { IO } from "fp-ts/lib/IO";
 import * as pg from "pg";
 import getPool from "./getPool";
 
 export type AssertMode = "any" | "none" | "one" | "oneOrMany" | "oneOrNone";
+export type QueryIO = (query: pg.QueryConfig, txOpts?: TxOptions) => IO<Bluebird<QueryResponse>>;
+export type Query = (query: pg.QueryConfig, txOpts?: TxOptions) => Bluebird<QueryResponse>;
+export type QueryResponse = void | any | any[];
 export type TaskFn = (tx: pg.Client) => Bluebird<any>;
+export type TaskIO = (tx: pg.Client) => IO<Bluebird<any>>;
 export type TxIsolationLevel = "READ UNCOMMITTED" | "READ COMMITTED" | "REPEATABLE READ" | "SERIALIZABLE";
 export type TypeParser<T> = (val: string) => T;
 
 export interface DbPool extends pg.Pool {
-  transaction?: TransactableFn;
-  any?: (query: pg.QueryConfig, txOpts?: TxOptions) => Bluebird<any[]>;
-  none?: (query: pg.QueryConfig, txOpts?: TxOptions) => Bluebird<void>;
-  one?: (query: pg.QueryConfig, txOpts?: TxOptions) => Bluebird<any>;
-  oneOrMany?: (query: pg.QueryConfig, txOpts?: TxOptions) => Bluebird<any[]>;
-  oneOrNone?: (query: pg.QueryConfig, txOpts?: TxOptions) => Bluebird<any | void>;
+  transaction?: Transactable;
+  transactionIO?: TransactableIO;
+  any?: Query;
+  anyIO?: QueryIO;
+  none?: Query;
+  noneIO?: QueryIO;
+  one?: Query;
+  oneIO?: QueryIO;
+  oneOrMany?: Query;
+  oneOrManyIO?: QueryIO;
+  oneOrNone?: Query;
+  oneOrNoneIO?: QueryIO;
 }
 export interface DbResponse {
   rows: any[];
 }
 
-export interface TransactableFn {
+export interface Transactable {
   (txOpts: TxOptions, fn: TaskFn): Bluebird<any>;
   (txOpts: TaskFn, fn?: void): Bluebird<any>;
+}
+
+export interface TransactableIO {
+  (txOpts: TxOptions, fn: TaskIO): IO<Bluebird<any>>;
+  (txOpts: TaskIO, fn?: void): IO<Bluebird<any>>;
 }
 
 export interface PgType {
