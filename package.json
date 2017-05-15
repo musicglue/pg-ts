@@ -1,0 +1,29 @@
+{
+  "name": "pg-ts",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/",
+  "module": "src/index.ts",
+  "repository": "https://github.com/musicglue/pg-ts",
+  "author": "Music Glue",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "bluebird": "^3.5.0",
+    "camelcase-keys": "^4.1.0",
+    "fp-ts": "^0.2.7",
+    "lodash": "^4.17.4",
+    "pg": "^6.1.5"
+  },
+  "devDependencies": {
+    "@types/bluebird": "^3.5.3",
+    "@types/camelcase-keys": "^4.0.0",
+    "@types/lodash": "^4.14.64",
+    "@types/pg": "^6.1.40",
+    "ts-node": "^3.0.4",
+    "tslint": "^5.2.0",
+    "typescript": "^2.3.2"
+  }
+}
