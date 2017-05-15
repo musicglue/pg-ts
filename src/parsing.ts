@@ -1,7 +1,7 @@
 import * as Bluebird from "bluebird";
 import * as pg from "pg";
 import { SQL } from ".";
-import postgresToISO from "./types/interval";
+import postgresToISO from "./pgTypes/interval";
 
 import { PgType, QueryResult, TypeParser, TypeParsers } from ".";
 
