@@ -1,27 +1,25 @@
 import {
   camelCase,
   curry,
-  flip,
   flowRight as compose,
-  mapKeys,
-  mapValues,
+  fromPairs,
+  zip,
 } from "lodash";
 
-const mapValuesF = curry(flip(mapValues), 2);
-const mapKeysF = curry(flip(mapKeys), 2);
-
-type checker = (input: any) => boolean;
+type checker = (a: any) => boolean;
 type transformer = (input: any) => any;
 
 const applyIf = curry((p: checker, f: transformer, x: any) => (p(x) ? f(x) : x));
+const mapKeys = curry((f: transformer, x: any) => fromPairs(zip(Object.keys(x).map(f), Object.values(x))));
+const mapValues = curry((f: transformer, x: any) => fromPairs(zip(Object.keys(x), Object.values(x).map(f))));
 
-const transform = compose(
-  mapValuesF((v: any) => {
+const transform: any = compose(
+  mapValues((v: any) => {
     if (v == null || typeof v !== "object" || v instanceof Date) { return v; }
-    if (Array.isArray(v)) { return v.map(camelCaseify); } // eslint-disable-line no-use-before-define
-    return camelCaseify(v);  // eslint-disable-line no-use-before-define
+    if (Array.isArray(v)) { return v.map(camelCaseify); }
+    return camelCaseify(v);
   }),
-  mapKeysF(applyIf((x: any) => typeof x === "string" && !x.startsWith("_"), camelCase)),
+  mapKeys(applyIf((x: any) => typeof x === "string" && !x.startsWith("_"), camelCase)),
 ) as transformer;
 
 const camelCaseify = applyIf((x: any) => x != null && typeof x === "object", transform);
