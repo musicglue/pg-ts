@@ -2,3 +2,7 @@ src/
 node_modules/
 tsconfig.json
 tslint.json
+.vs/
+.vscode/
+.editorconfig
+.idea
