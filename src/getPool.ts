@@ -72,7 +72,7 @@ const transactionTask = (pool: DbPool): TransactionTask => {
 };
 
 export default (config: PoolConfig): DbPool => {
-  const pool: DbPool = new pg.Pool(config);
+  const pool = new pg.Pool(config) as DbPool;
 
   setupParsers(pool, config.parsers);
   setupPoolEvents(pool);

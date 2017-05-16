@@ -24,19 +24,19 @@ export type TxIsolationLevel = "READ UNCOMMITTED" | "READ COMMITTED" | "REPEATAB
 export type TypeParser<T> = (val: string) => T;
 
 export interface DbPool extends pg.Pool {
-  any?: Query;
-  anyTask?: QueryTask;
-  none?: Query;
-  noneTask?: QueryTask;
-  one?: Query;
-  oneTask?: QueryTask;
-  oneOrMany?: Query;
-  oneOrManyTask?: QueryTask;
-  oneOrNone?: Query;
-  oneOrNoneTask?: QueryTask;
+  any: Query;
+  anyTask: QueryTask;
+  none: Query;
+  noneTask: QueryTask;
+  one: Query;
+  oneTask: QueryTask;
+  oneOrMany: Query;
+  oneOrManyTask: QueryTask;
+  oneOrNone: Query;
+  oneOrNoneTask: QueryTask;
 
-  transaction?: Transaction;
-  transactionTask?: TransactionTask;
+  transaction: Transaction;
+  transactionTask: TransactionTask;
 }
 
 export interface DbResponse {
