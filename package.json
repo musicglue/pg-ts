@@ -13,14 +13,12 @@
   },
   "dependencies": {
     "bluebird": "^3.5.0",
-    "camelcase-keys": "^4.1.0",
-    "fp-ts": "^0.2.7",
+    "fp-ts": "^0.2.8",
     "lodash": "^4.17.4",
-    "pg": "^6.1.5"
+    "pg": "^6.2.2"
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.3",
-    "@types/camelcase-keys": "^4.0.0",
     "@types/lodash": "^4.14.64",
     "@types/pg": "^6.1.40",
     "ts-node": "^3.0.4",

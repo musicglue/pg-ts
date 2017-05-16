@@ -1,5 +1,5 @@
-import camelcase = require("camelcase-keys");
-import { DbResponseTransformer } from "./index";
+import { DbResponseTransformer } from ".";
+import camelcase from "./utils/camelify";
 
 const expectedNoneFoundSome = "Query returned rows but no rows were expected";
 const expectedOneManyFound = "Query returned many rows but one row was expected";
