@@ -13,10 +13,10 @@ export const SQL = (parts: TemplateStringsArray, ...inValues: any[]): pg.QueryCo
     const opIndex = i - 1;
     const value = inValues[opIndex];
     if (typeof value === "function") {
-      const { text, values } = value(opIndex);
-      outValues.push(...values);
+      const { __text, __values } = value(opIndex);
+      outValues.push(...__values);
 
-      return `${prev}${text}${curr}`;
+      return `${prev}${__text}${curr}`;
     }
     outValues.push(value);
 
