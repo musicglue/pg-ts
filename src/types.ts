@@ -10,6 +10,8 @@ export type QueryTask = (query: pg.QueryConfig, txOpts?: TxOptions) => BTask<Que
 
 export type TransactionScope = (tx: pg.Client) => Bluebird<any>;
 
+export type QueryFragmentBuilder = (offset: number) => QueryFragment;
+
 export interface Transaction {
   (x: TransactionScope, y?: null): Bluebird<any>;
   (x: TxOptions, y: TransactionScope): Bluebird<any>;
@@ -55,6 +57,11 @@ export interface PoolConfig extends pg.PoolConfig {
 
 export interface QueryResult {
   rows: PgType[];
+}
+
+export interface QueryFragment {
+  __text: string;
+  __values: any[];
 }
 
 export interface TxOptions {
