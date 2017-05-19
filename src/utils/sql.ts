@@ -1,7 +1,7 @@
 import * as pg from "pg";
 import { QueryFragment, QueryFragmentBuilder } from "../types";
 
-function* indexFactory(seed = 0) {
+function* sequenceGenerator(seed = 0) {
   let index = seed;
 
   while (true) {
@@ -10,26 +10,25 @@ function* indexFactory(seed = 0) {
 }
 
 export const SQLFragment = (parts: TemplateStringsArray, ...inValues: any[]): QueryFragmentBuilder =>
-  (idxGen: Generator): QueryFragment => ({
-    __text: parts.reduce((prev, curr) => `${prev}$${idxGen.next().value}${curr}`),
+  (seqGen: Generator): QueryFragment => ({
+    __text: parts.reduce((prev, curr) => `${prev}$${seqGen.next().value}${curr}`),
     __values: inValues,
   });
 
 export const SQL = (parts: TemplateStringsArray, ...inValues: any[]): pg.QueryConfig => {
-  const idxGenerator = indexFactory();
+  const seqGen: IterableIterator<number> = sequenceGenerator();
   const outValues: any[] = [];
   const outText = parts.reduce((prev, curr) => {
     const value = inValues.shift();
     if (typeof value === "function") {
-      const { __text, __values } = value(idxGenerator);
+      const { __text, __values } = value(seqGen);
       outValues.push(...__values);
 
       return `${prev}${__text}${curr}`;
     }
-    const i = idxGenerator.next().value;
     outValues.push(value);
 
-    return `${prev}$${i}${curr}`;
+    return `${prev}$${seqGen.next().value + 1}${curr}`;
   });
 
   return { text: outText, values: outValues };

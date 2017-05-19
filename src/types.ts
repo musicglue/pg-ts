@@ -10,7 +10,7 @@ export type QueryTask = (query: pg.QueryConfig, txOpts?: TxOptions) => BTask<Que
 
 export type TransactionScope = (tx: pg.Client) => Bluebird<any>;
 
-export type QueryFragmentBuilder = (idxGen: Generator) => QueryFragment;
+export type QueryFragmentBuilder = (seqGen: IterableIterator<number>) => QueryFragment;
 
 export interface Transaction {
   (x: TransactionScope, y?: null): Bluebird<any>;
