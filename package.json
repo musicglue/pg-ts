@@ -9,7 +9,36 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "test": "NODE_ENV=test jest --runInBand"
+  },
+  "jest": {
+    "collectCoverage": true,
+    "coverageDirectory": "./coverage",
+    "coveragePathIgnorePatterns": [
+      "<rootDir>/knexfile.ts",
+      "<rootDir>/src/db.ts",
+      "<rootDir>/build/",
+      "<rootDir>/node_modules/",
+      "<rootDir>/__tests__/support/*.ts"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 100,
+        "functions": 100,
+        "lines": 100,
+        "statements": 100
+      }
+    },
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "setupTestFrameworkScriptFile": "<rootDir>/__tests__/setup.ts",
+    "transform": {
+      "\\.(ts|tsx)$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+    },
+    "testRegex": "/__tests__/.*_test\\.(ts|tsx|js)$"
   },
   "dependencies": {
     "bluebird": "^3.5.0",
@@ -19,8 +48,11 @@
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.3",
+    "@types/jest": "^19.2.3",
     "@types/lodash": "^4.14.64",
     "@types/pg": "^6.1.40",
+    "jest": "^20.0.3",
+    "ts-jest": "^20.0.4",
     "ts-node": "^3.0.4",
     "tslint": "^5.2.0",
     "typescript": "^2.3.2"
