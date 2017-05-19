@@ -1,16 +1,15 @@
 import * as pg from "pg";
 import { QueryFragment, QueryFragmentBuilder } from "../types";
 
-function* sequenceGenerator(seed = 0) {
+function* sequenceGenerator(seed = 1) {
   let index = seed;
-
   while (true) {
     yield index++;
   }
 }
 
 export const SQLFragment = (parts: TemplateStringsArray, ...inValues: any[]): QueryFragmentBuilder =>
-  (seqGen: Generator): QueryFragment => ({
+  (seqGen): QueryFragment => ({
     __text: parts.reduce((prev, curr) => `${prev}$${seqGen.next().value}${curr}`),
     __values: inValues,
   });
