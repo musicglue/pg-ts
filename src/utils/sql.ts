@@ -27,7 +27,7 @@ export const SQL = (parts: TemplateStringsArray, ...inValues: any[]): pg.QueryCo
     }
     outValues.push(value);
 
-    return `${prev}$${seqGen.next().value + 1}${curr}`;
+    return `${prev}$${seqGen.next().value}${curr}`;
   });
 
   return { text: outText, values: outValues };
