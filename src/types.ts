@@ -1,25 +1,24 @@
-import * as Bluebird from "bluebird";
+import { Task } from "fp-ts/lib/Task";
 import * as pg from "pg";
-import { BTask } from "./task";
 
 export type DbResponseTransformer = (result: DbResponse) => QueryResponse;
 export type QueryResponse = void | any | any[];
 
 export type Query = (query: pg.QueryConfig, txOpts?: TxOptions) => QueryResponse;
-export type QueryTask = (query: pg.QueryConfig, txOpts?: TxOptions) => BTask<QueryResponse>;
+export type QueryTask = (query: pg.QueryConfig, txOpts?: TxOptions) => Task<QueryResponse>;
 
-export type TransactionScope = (tx: pg.Client) => Bluebird<any>;
+export type TransactionScope = (tx: pg.Client) => Promise<any>;
 
 export type QueryFragmentBuilder = (seqGen: IterableIterator<number>) => QueryFragment;
 
 export interface Transaction {
-  (x: TransactionScope, y?: null): Bluebird<any>;
-  (x: TxOptions, y: TransactionScope): Bluebird<any>;
+  (x: TransactionScope, y?: null): Promise<any>;
+  (x: TxOptions, y: TransactionScope): Promise<any>;
 }
 
 export interface TransactionTask {
-  (x: TransactionScope, y?: null): BTask<any>;
-  (x: TxOptions, y: TransactionScope): BTask<any>;
+  (x: TransactionScope, y?: null): Task<any>;
+  (x: TxOptions, y: TransactionScope): Task<any>;
 }
 
 export type TxIsolationLevel = "READ UNCOMMITTED" | "READ COMMITTED" | "REPEATABLE READ" | "SERIALIZABLE";

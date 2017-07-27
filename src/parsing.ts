@@ -1,4 +1,3 @@
-import * as Bluebird from "bluebird";
 import * as pg from "pg";
 import { SQL } from ".";
 import postgresToISO from "./pgTypes/interval";
@@ -17,8 +16,12 @@ const arrayParser = (typeParser: TypeParser<any>) => (input: string) =>
 export default async (pool: pg.Pool, parsers: TypeParsers): Promise<void[]> => {
   const parserSet: TypeParsers = { interval: postgresToISO, ...parsers };
 
-  return await Bluebird
-    .map(Object.keys(parserSet), name => pool.query(typeQuery(name)))
+  const queries = await Promise.all(
+    Object
+      .keys(parserSet)
+      .map(name => pool.query(typeQuery(name))));
+
+  return queries
     .map(({ rows: [type] }: QueryResult) => type)
     .map((type: PgType) => {
       const parser = parserSet[type.typname];
