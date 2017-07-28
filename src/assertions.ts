@@ -1,4 +1,4 @@
-import * as Bluebird from "bluebird";
+import { Task } from "fp-ts/lib/Task";
 import { get } from "lodash";
 
 import {
@@ -16,18 +16,14 @@ import {
   oneOrNone,
 } from "./dbResponseTransformers";
 
-import { BTask } from "./task";
-
 type QueryTaskFactory = (db: DbPool) => (transformer: DbResponseTransformer) => QueryTask;
 
 const getQueryTask: QueryTaskFactory =
   db =>
     transformer =>
       (query, txOpts) =>
-        new BTask(() =>
-          Bluebird
-            .fromCallback(cb => get(txOpts, "tx", db).query(query, cb))
-            .then(transformer));
+        new Task(() =>
+          get(txOpts, "tx", db).query(query).then(transformer));
 
 type UnwrapQueryTask = (queryTask: QueryTask) => Query;
 

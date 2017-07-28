@@ -41,13 +41,11 @@
     "testRegex": "/__tests__/.*_test\\.(ts|tsx|js)$"
   },
   "dependencies": {
-    "bluebird": "^3.5.0",
     "fp-ts": "^0.2.8",
     "lodash": "^4.17.4",
     "pg": "^6.2.2"
   },
   "devDependencies": {
-    "@types/bluebird": "^3.5.3",
     "@types/jest": "^19.2.3",
     "@types/lodash": "^4.14.64",
     "@types/pg": "^6.1.40",
