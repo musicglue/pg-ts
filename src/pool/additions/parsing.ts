@@ -1,8 +1,9 @@
 import * as pg from "pg";
-import { SQL } from ".";
-import postgresToISO from "./pgTypes/interval";
+import { SQL } from "../..";
+import postgresToISO from "../../pgTypes/interval";
 
-import { PgType, QueryResult, TypeParser, TypeParsers } from ".";
+import { PgType, QueryResult, TypeParser, TypeParsers } from "../../";
+import { Pool } from "../types";
 
 const typeQuery = (name: string) => SQL`
 SELECT typname, oid, typarray
@@ -13,7 +14,7 @@ ORDER BY oid;`;
 const arrayParser = (typeParser: TypeParser<any>) => (input: string) =>
   pg.types.arrayParser.create(input, typeParser).parse();
 
-export default async (pool: pg.Pool, parsers: TypeParsers): Promise<void[]> => {
+export const bindParsers = async (pool: Pool, parsers: TypeParsers): Promise<void[]> => {
   const parserSet: TypeParsers = { interval: postgresToISO, ...parsers };
 
   const queries = await Promise.all(

@@ -1,4 +1,4 @@
-import getPool from "./getPool";
+import { getPool } from "./pool";
 
 export { default as parse } from "./utils/connection";
 export * from "./utils/sql";

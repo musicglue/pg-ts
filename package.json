@@ -42,17 +42,21 @@
   },
   "dependencies": {
     "fp-ts": "^0.2.8",
+    "generic-pool": "^3.1.7",
     "lodash": "^4.17.4",
-    "pg": "^6.2.2"
+    "pg": "^7.3.0",
+    "ramda": "^0.24.1"
   },
   "devDependencies": {
-    "@types/jest": "^19.2.3",
+    "@types/generic-pool": "^3.1.0",
+    "@types/jest": "^20.0.8",
     "@types/lodash": "^4.14.64",
-    "@types/pg": "^6.1.40",
-    "jest": "^20.0.3",
-    "ts-jest": "^20.0.4",
-    "ts-node": "^3.0.4",
-    "tslint": "^5.2.0",
-    "typescript": "^2.3.2"
+    "@types/pg": "^7.1.0",
+    "@types/ramda": "^0.24.11",
+    "jest": "^21.0.2",
+    "ts-jest": "^21.0.0",
+    "ts-node": "^3.3.0",
+    "tslint": "^5.7.0",
+    "typescript": "^2.5.2"
   }
 }

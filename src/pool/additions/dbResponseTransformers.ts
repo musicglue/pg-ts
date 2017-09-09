@@ -1,5 +1,5 @@
-import { DbResponseTransformer } from ".";
-import camelcase from "./utils/camelify";
+import camelcase from "../../utils/camelify";
+import { DbResponseTransformer } from "../types";
 
 const expectedNoneFoundSome = "Query returned rows but no rows were expected";
 const expectedOneManyFound = "Query returned many rows but one row was expected";
