@@ -16,7 +16,14 @@ import {
   oneOrNone,
 } from "./dbResponseTransformers";
 
+type QueryFactory = (db: DbPool) => (transformer: DbResponseTransformer) => Query;
 type QueryTaskFactory = (db: DbPool) => (transformer: DbResponseTransformer) => QueryTask;
+
+const getQuery: QueryFactory =
+  db =>
+    transformer =>
+      (query, txOpts) =>
+        get(txOpts, "tx", db).query(query).then(transformer);
 
 const getQueryTask: QueryTaskFactory =
   db =>
@@ -25,26 +32,24 @@ const getQueryTask: QueryTaskFactory =
         new Task(() =>
           get(txOpts, "tx", db).query(query).then(transformer));
 
-type UnwrapQueryTask = (queryTask: QueryTask) => Query;
-
-const unwrapQueryTask: UnwrapQueryTask =
-  queryTask =>
-    query => queryTask(query).run();
-
 export default (db: DbPool): DbPool => {
-  const transformQuery = getQueryTask(db);
+  const transformQuery = getQuery(db);
+  const transformQueryTask = getQueryTask(db);
 
-  db.anyTask = transformQuery(any);
-  db.noneTask = transformQuery(none);
-  db.oneTask = transformQuery(one);
-  db.oneOrManyTask = transformQuery(oneOrMany);
-  db.oneOrNoneTask = transformQuery(oneOrNone);
+  db.any = transformQuery(any);
+  db.anyTask = transformQueryTask(any);
 
-  db.any = unwrapQueryTask(db.anyTask);
-  db.none = unwrapQueryTask(db.noneTask);
-  db.one = unwrapQueryTask(db.oneTask);
-  db.oneOrMany = unwrapQueryTask(db.oneOrManyTask);
-  db.oneOrNone = unwrapQueryTask(db.oneOrNoneTask);
+  db.none = transformQuery(none);
+  db.noneTask = transformQueryTask(none);
+
+  db.one = transformQuery(one);
+  db.oneTask = transformQueryTask(one);
+
+  db.oneOrMany = transformQuery(oneOrMany);
+  db.oneOrManyTask = transformQueryTask(oneOrMany);
+
+  db.oneOrNone = transformQuery(oneOrNone);
+  db.oneOrNoneTask = transformQueryTask(oneOrNone);
 
   return db;
 };

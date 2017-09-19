@@ -12,13 +12,13 @@ export type TransactionScope = (tx: pg.Client) => Promise<any>;
 export type QueryFragmentBuilder = (seqGen: IterableIterator<number>) => QueryFragment;
 
 export interface Transaction {
-  (x: TransactionScope, y?: null): Promise<any>;
   (x: TxOptions, y: TransactionScope): Promise<any>;
+  (x: TransactionScope, y?: null): Promise<any>;
 }
 
 export interface TransactionTask {
-  (x: TransactionScope, y?: null): Task<any>;
   (x: TxOptions, y: TransactionScope): Task<any>;
+  (x: TransactionScope, y?: null): Task<any>;
 }
 
 export type TxIsolationLevel = "READ UNCOMMITTED" | "READ COMMITTED" | "REPEATABLE READ" | "SERIALIZABLE";

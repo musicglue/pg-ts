@@ -15,8 +15,7 @@ import {
 } from "./index";
 import setupParsers from "./parsing";
 
-pg.defaults.poolSize = parseInt(process.env.PG_POOL_SIZE || 10, 10);
-(pg.defaults as any).returnToHead = true;
+pg.defaults.poolSize = parseInt(process.env.PG_POOL_SIZE || "10", 10);
 
 const defaultTxOptions: TxOptions = {
   deferrable: false,
@@ -33,7 +32,8 @@ const transaction = (pool: DbPool): Transaction => {
   return t;
 
   function t(x: TransactionScope, y?: null): Promise<any>;
-  function t(x: TxOptions, y: TransactionScope): Promise<any> {
+  function t(x: TxOptions, y: TransactionScope): Promise<any>;
+  function t(x: any, y?: any) {
     const opts = typeof x === "function" ? defaultTxOptions : x;
     const fn = typeof x === "function" ? x : y;
 
@@ -66,8 +66,9 @@ const transaction = (pool: DbPool): Transaction => {
 const transactionTask = (pool: DbPool): TransactionTask => {
   return t;
 
+  function t(x: TxOptions, y: TransactionScope): Task<any>;
   function t(x: TransactionScope, y?: null): Task<any>;
-  function t(x: TxOptions, y: TransactionScope): Task<any> {
+  function t(x: any, y?: any) {
     return new Task(() => transaction(pool)(x, y));
   }
 };

@@ -24,10 +24,10 @@
     ],
     "coverageThreshold": {
       "global": {
-        "branches": 100,
-        "functions": 100,
-        "lines": 100,
-        "statements": 100
+        "branches": 75,
+        "functions": 75,
+        "lines": 75,
+        "statements": 75
       }
     },
     "moduleFileExtensions": [
@@ -41,16 +41,16 @@
     "testRegex": "/__tests__/.*_test\\.(ts|tsx|js)$"
   },
   "dependencies": {
-    "fp-ts": "^0.2.8",
+    "fp-ts": "^0.5.2",
     "lodash": "^4.17.4",
-    "pg": "^6.2.2"
+    "pg": "^7.3.0"
   },
   "devDependencies": {
-    "@types/jest": "^19.2.3",
+    "@types/jest": "^20.0.8",
     "@types/lodash": "^4.14.64",
-    "@types/pg": "^6.1.40",
-    "jest": "^20.0.3",
-    "ts-jest": "^20.0.4",
+    "@types/pg": "^7.1.2",
+    "jest": "^21.1.0",
+    "ts-jest": "^21.0.1",
     "ts-node": "^3.0.4",
     "tslint": "^5.2.0",
     "typescript": "^2.3.2"
