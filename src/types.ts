@@ -4,7 +4,7 @@ import * as pg from "pg";
 export type DbResponseTransformer = (result: DbResponse) => QueryResponse;
 export type QueryResponse = void | any | any[];
 
-export type Query = (query: pg.QueryConfig, txOpts?: TxOptions) => QueryResponse;
+export type Query = (query: pg.QueryConfig, txOpts?: TxOptions) => Promise<QueryResponse>;
 export type QueryTask = (query: pg.QueryConfig, txOpts?: TxOptions) => Task<QueryResponse>;
 
 export type TransactionScope = (tx: pg.Client) => Promise<any>;
