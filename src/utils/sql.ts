@@ -5,7 +5,7 @@ type IndexGetter = (value: any) => number;
 export const SQLFragment = (parts: TemplateStringsArray, ...inValues: any[]) => (
   getValueIndex: IndexGetter,
 ): string =>
-  parts.reduce((prev, curr, valIdx) => `${prev}$${getValueIndex(inValues[valIdx - 1])}${curr}`);
+  parts.reduce((prev, curr, valIdx) => `${prev}${getValueIndex(inValues[valIdx - 1])}${curr}`);
 
 export const SQL = (parts: TemplateStringsArray, ...inValues: any[]): pg.QueryConfig => {
   const outValues: any[] = [];
