@@ -13,12 +13,12 @@ export type QueryFragmentBuilder = (seqGen: IterableIterator<number>) => QueryFr
 
 export interface Transaction {
   (x: TxOptions, y: TransactionScope): Promise<any>;
-  (x: TransactionScope, y?: null): Promise<any>;
+  (x: TransactionScope): Promise<any>;
 }
 
 export interface TransactionTask {
   (x: TxOptions, y: TransactionScope): Task<any>;
-  (x: TransactionScope, y?: null): Task<any>;
+  (x: TransactionScope): Task<any>;
 }
 
 export type TxIsolationLevel =

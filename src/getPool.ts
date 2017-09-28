@@ -31,8 +31,8 @@ const getIsolationStatement = (txOpts?: TxOptions): string => {
 const transaction = (pool: DbPool): Transaction => {
   return t;
 
-  function t(x: TransactionScope, y?: null): Promise<any>;
   function t(x: TxOptions, y: TransactionScope): Promise<any>;
+  function t(x: TransactionScope): Promise<any>;
   function t(x: any, y?: any) {
     const opts = typeof x === "function" ? defaultTxOptions : x;
     const fn = typeof x === "function" ? x : y;
@@ -67,12 +67,13 @@ const transaction = (pool: DbPool): Transaction => {
 };
 
 const transactionTask = (pool: DbPool): TransactionTask => {
+  const transactionFactory = transaction(pool);
   return t;
 
   function t(x: TxOptions, y: TransactionScope): Task<any>;
   function t(x: TransactionScope, y?: null): Task<any>;
   function t(x: any, y?: any) {
-    return new Task(() => transaction(pool)(x, y));
+    return new Task(() => transactionFactory(x, y));
   }
 };
 
