@@ -21,7 +21,11 @@ export interface TransactionTask {
   (x: TransactionScope, y?: null): Task<any>;
 }
 
-export type TxIsolationLevel = "READ UNCOMMITTED" | "READ COMMITTED" | "REPEATABLE READ" | "SERIALIZABLE";
+export type TxIsolationLevel =
+  | "READ UNCOMMITTED"
+  | "READ COMMITTED"
+  | "REPEATABLE READ"
+  | "SERIALIZABLE";
 export type TypeParser<T> = (val: string) => T;
 
 export interface DbPool extends pg.Pool {

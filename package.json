@@ -8,7 +8,8 @@
   "author": "Music Glue",
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist/  && tsc",
+    "format": "prettier --write --parser typescript --trailing-comma all --list-different --print-width 100 'src/**/*.ts'",
     "prepublish": "npm run build",
     "test": "NODE_ENV=test jest --runInBand"
   },
@@ -46,13 +47,14 @@
     "pg": "^7.3.0"
   },
   "devDependencies": {
-    "@types/jest": "^20.0.8",
-    "@types/lodash": "^4.14.64",
-    "@types/pg": "^7.1.2",
-    "jest": "^21.1.0",
+    "@types/jest": "^21.1.1",
+    "@types/lodash": "^4.14.76",
+    "@types/pg": "^7.1.4",
+    "jest": "^21.2.1",
+    "prettier": "^1.7.2",
     "ts-jest": "^21.0.1",
     "ts-node": "^3.0.4",
     "tslint": "^5.2.0",
-    "typescript": "^2.3.2"
+    "typescript": "^2.5.3"
   }
 }

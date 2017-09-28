@@ -17,8 +17,10 @@ const NUMBER = "([+-]?\\d+)";
 const YEAR = NUMBER + "\\s+years?";
 const MONTH = NUMBER + "\\s+mons?";
 const DAY = NUMBER + "\\s+days?";
-const TIME = "([+-])?([\\d]*):(\\d\\d):(\\d\\d)\.?(\\d{1,6})?";
-const INTERVAL = new RegExp([YEAR, MONTH, DAY, TIME].map(regexString => `(${regexString})?`).join("\\s*"));
+const TIME = "([+-])?([\\d]*):(\\d\\d):(\\d\\d).?(\\d{1,6})?";
+const INTERVAL = new RegExp(
+  [YEAR, MONTH, DAY, TIME].map(regexString => `(${regexString})?`).join("\\s*"),
+);
 
 const propMapToISO: PGIntervalObject<string> = {
   days: "D",
@@ -47,33 +49,34 @@ const parseSubseconds = (fraction: string): number =>
   parseInt(`${fraction}${"000000".slice(fraction.length)}`, 10);
 
 const parse = (raw: string): PGIntervalObject<number> => {
-  if (!raw) { return null; }
+  if (!raw) {
+    return null;
+  }
 
   const matches = INTERVAL.exec(raw);
   const isNegative = matches[NEGATION_INDEX] === NEGATION_INDICATOR;
 
-  return Object
-    .keys(positionLookup)
-    .reduce((acc, prop: PGIntervalField) => {
-      const position = positionLookup[prop];
-      const value = matches[position];
-      if (!value) { return acc; }
+  return Object.keys(positionLookup).reduce((acc, prop: PGIntervalField) => {
+    const position = positionLookup[prop];
+    const value = matches[position];
+    if (!value) {
+      return acc;
+    }
 
-      const parsed = String(prop) === "milliseconds"
-        ? parseSubseconds(value)
-        : parseInt(value, 10);
+    const parsed = String(prop) === "milliseconds" ? parseSubseconds(value) : parseInt(value, 10);
 
-      if (!parsed) { return acc; }
+    if (!parsed) {
+      return acc;
+    }
 
-      return {
-        ...acc,
-        [prop]: (isNegative && timeProps.includes(prop)) ? parsed * -1 : parsed,
-      };
-    }, {});
+    return {
+      ...acc,
+      [prop]: isNegative && timeProps.includes(prop) ? parsed * -1 : parsed,
+    };
+  }, {});
 };
 
-const formatMilliseconds = (raw: number): string =>
-  String(raw * 1000).replace(/[0]+$/g, "");
+const formatMilliseconds = (raw: number): string => String(raw * 1000).replace(/[0]+$/g, "");
 
 const buildProperty = (parsed: PGIntervalObject<number>) => (prop: PGIntervalField): string => {
   const value = parsed[prop] || 0;

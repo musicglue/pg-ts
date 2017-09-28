@@ -17,27 +17,38 @@ class ResponseNumberError extends Error {
 const camelcaseRows = (rows: any[]) => rows.map(camelcase);
 
 // tslint:disable-next-line:variable-name
-export const any: DbResponseTransformer = result =>
-  camelcaseRows(result.rows);
+export const any: DbResponseTransformer = result => camelcaseRows(result.rows);
 
 export const none: DbResponseTransformer = result => {
-  if (result.rows.length) { throw new ResponseNumberError(expectedNoneFoundSome); }
+  if (result.rows.length) {
+    throw new ResponseNumberError(expectedNoneFoundSome);
+  }
   return undefined;
 };
 
 export const one: DbResponseTransformer = result => {
-  if (result.rows.length === 0) { throw new ResponseNumberError(expectedOneNoneFound); }
-  if (result.rows.length > 1) { throw new ResponseNumberError(expectedOneManyFound); }
+  if (result.rows.length === 0) {
+    throw new ResponseNumberError(expectedOneNoneFound);
+  }
+  if (result.rows.length > 1) {
+    throw new ResponseNumberError(expectedOneManyFound);
+  }
   return camelcaseRows(result.rows)[0];
 };
 
 export const oneOrMany: DbResponseTransformer = result => {
-  if (result.rows.length === 0) { throw new ResponseNumberError("Query returned no rows but rows were expected"); }
+  if (result.rows.length === 0) {
+    throw new ResponseNumberError("Query returned no rows but rows were expected");
+  }
   return camelcaseRows(result.rows);
 };
 
 export const oneOrNone: DbResponseTransformer = result => {
-  if (result.rows.length > 1) { throw new ResponseNumberError(expectedOneOrNone); }
-  if (result.rows.length === 0) { return undefined; }
+  if (result.rows.length > 1) {
+    throw new ResponseNumberError(expectedOneOrNone);
+  }
+  if (result.rows.length === 0) {
+    return undefined;
+  }
   return camelcaseRows(result.rows)[0];
 };

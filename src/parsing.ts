@@ -17,15 +17,14 @@ export default async (pool: pg.Pool, parsers: TypeParsers): Promise<void[]> => {
   const parserSet: TypeParsers = { interval: postgresToISO, ...parsers };
 
   const queries = await Promise.all(
-    Object
-      .keys(parserSet)
-      .map(name => pool.query(typeQuery(name))));
+    Object.keys(parserSet).map(name => pool.query(typeQuery(name))),
+  );
 
-  return queries
-    .map(({ rows: [type] }: QueryResult) => type)
-    .map((type: PgType) => {
-      const parser = parserSet[type.typname];
-      pg.types.setTypeParser(type.oid, parser);
-      if (type.typarray) { pg.types.setTypeParser(type.typarray, arrayParser(parser)); }
-    });
+  return queries.map(({ rows: [type] }: QueryResult) => type).map((type: PgType) => {
+    const parser = parserSet[type.typname];
+    pg.types.setTypeParser(type.oid, parser);
+    if (type.typarray) {
+      pg.types.setTypeParser(type.typarray, arrayParser(parser));
+    }
+  });
 };
