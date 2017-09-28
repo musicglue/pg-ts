@@ -10,7 +10,7 @@
   "scripts": {
     "build": "rm -rf dist/  && tsc",
     "format": "prettier --write --parser typescript --trailing-comma all --list-different --print-width 100 'src/**/*.ts'",
-    "prepublish": "npm run build",
+    "prepublishOnly": "npm run build",
     "test": "NODE_ENV=test jest --runInBand"
   },
   "jest": {
