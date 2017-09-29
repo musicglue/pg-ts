@@ -77,7 +77,7 @@ const transactionTask = (pool: DbPool): TransactionTask => {
   }
 };
 
-export default async (config: PoolConfig): Promise<DbPool> => {
+export default (config: PoolConfig): DbPool => {
   const pool = new pg.Pool(config) as DbPool;
 
   pool.parsersReady = setupParsers(pool, config.parsers);
