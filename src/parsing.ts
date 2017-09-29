@@ -13,18 +13,21 @@ ORDER BY oid;`;
 const arrayParser = (typeParser: TypeParser<any>) => (input: string) =>
   pg.types.arrayParser.create(input, typeParser).parse();
 
-export default async (pool: pg.Pool, parsers: TypeParsers): Promise<void[]> => {
+// tslint:disable-next-line:ban-types
+const map = <T, V>(x: (i: T, idx: number, obj: T[]) => V) => (y: T[]): V[] => y.map(x);
+
+export default (pool: pg.Pool, parsers: TypeParsers): Promise<boolean> => {
   const parserSet: TypeParsers = { interval: postgresToISO, ...parsers };
 
-  const queries = await Promise.all(
-    Object.keys(parserSet).map(name => pool.query(typeQuery(name))),
-  );
-
-  return queries.map(({ rows: [type] }: QueryResult) => type).map((type: PgType) => {
-    const parser = parserSet[type.typname];
-    pg.types.setTypeParser(type.oid, parser);
-    if (type.typarray) {
-      pg.types.setTypeParser(type.typarray, arrayParser(parser));
-    }
-  });
+  return Promise
+    .all(Object.keys(parserSet).map(name => pool.query(typeQuery(name))))
+    .then(map(({ rows: [type] }: QueryResult) => type))
+    .then(map((type: PgType) => {
+      const parser = parserSet[type.typname];
+      pg.types.setTypeParser(type.oid, parser);
+      if (type.typarray) {
+        pg.types.setTypeParser(type.typarray, arrayParser(parser));
+      }
+    }))
+    .then(() => true);
 };

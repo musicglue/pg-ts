@@ -1,24 +1,29 @@
 import { Task } from "fp-ts/lib/Task";
 import { get } from "lodash";
-
 import { DbPool, DbResponseTransformer, Query, QueryTask } from ".";
-
 import { any, none, one, oneOrMany, oneOrNone } from "./dbResponseTransformers";
 
 type QueryFactory = (db: DbPool) => (transformer: DbResponseTransformer) => Query;
 type QueryTaskFactory = (db: DbPool) => (transformer: DbResponseTransformer) => QueryTask;
 
-const getQuery: QueryFactory = db => transformer => (query, txOpts) =>
-  get(txOpts, "tx", db)
-    .query(query)
+const getQuery: QueryFactory = db => transformer => (query, txOpts) => {
+  const pool = get(txOpts, "tx", db);
+
+  return pool
+    .parsersReady
+    .then(() => pool.query(query))
     .then(transformer);
+};
 
 const getQueryTask: QueryTaskFactory = db => transformer => (query, txOpts) =>
-  new Task(() =>
-    get(txOpts, "tx", db)
-      .query(query)
-      .then(transformer),
-  );
+  new Task(() => {
+    const pool = get(txOpts, "tx", db);
+
+    return pool
+      .parsersReady
+      .then(() => pool.query(query))
+      .then(transformer);
+  });
 
 export default (db: DbPool): DbPool => {
   const transformQuery = getQuery(db);

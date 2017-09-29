@@ -42,6 +42,8 @@ export interface DbPool extends pg.Pool {
 
   transaction: Transaction;
   transactionTask: TransactionTask;
+
+  parsersReady: Promise<boolean>;
 }
 
 export interface DbResponse {
