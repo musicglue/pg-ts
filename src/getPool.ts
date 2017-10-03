@@ -37,32 +37,35 @@ const transaction = (pool: DbPool): Transaction => {
     const opts = typeof x === "function" ? defaultTxOptions : x;
     const fn = typeof x === "function" ? x : y;
 
-    return pool.connect().then(client => {
-      const opening = ["BEGIN TRANSACTION", getIsolationStatement(opts)];
+    return pool
+      .parsersReady
+      .then(() =>
+        pool.connect().then(client => {
+        const opening = ["BEGIN TRANSACTION", getIsolationStatement(opts)];
 
-      if (opts.readOnly) {
-        opening.push("READ ONLY");
-      }
-      if (opts.deferrable) {
-        opening.push("DEFERRABLE");
-      }
+        if (opts.readOnly) {
+          opening.push("READ ONLY");
+        }
+        if (opts.deferrable) {
+          opening.push("DEFERRABLE");
+        }
 
-      return Promise.resolve(opening.join(" "))
-        .then(openings => client.query(openings))
-        .then(() => fn(client))
-        .then((results: any) => {
-          client.query("COMMIT;");
-          client.release();
+        return Promise.resolve(opening.join(" "))
+          .then(openings => client.query(openings))
+          .then(() => fn(client))
+          .then((results: any) => {
+            client.query("COMMIT;");
+            client.release();
 
-          return results;
-        })
-        .catch(err => {
-          client.query("ROLLBACK;");
-          client.release();
+            return results;
+          })
+          .catch(err => {
+            client.query("ROLLBACK;");
+            client.release();
 
-          return Promise.reject(err);
-        });
-    });
+            return Promise.reject(err);
+          });
+      }));
   }
 };
 
