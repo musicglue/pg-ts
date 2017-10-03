@@ -1,6 +1,6 @@
 {
   "name": "pg-ts",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "main": "dist/index.js",
   "types": "dist/",
   "module": "src/index.ts",
