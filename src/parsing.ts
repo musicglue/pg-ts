@@ -19,15 +19,16 @@ const map = <T, V>(x: (i: T, idx: number, obj: T[]) => V) => (y: T[]): V[] => y.
 export default (pool: pg.Pool, parsers: TypeParsers): Promise<boolean> => {
   const parserSet: TypeParsers = { interval: postgresToISO, ...parsers };
 
-  return Promise
-    .all(Object.keys(parserSet).map(name => pool.query(typeQuery(name))))
+  return Promise.all(Object.keys(parserSet).map(name => pool.query(typeQuery(name))))
     .then(map(({ rows: [type] }: QueryResult) => type))
-    .then(map((type: PgType) => {
-      const parser = parserSet[type.typname];
-      pg.types.setTypeParser(type.oid, parser);
-      if (type.typarray) {
-        pg.types.setTypeParser(type.typarray, arrayParser(parser));
-      }
-    }))
+    .then(
+      map((type: PgType) => {
+        const parser = parserSet[type.typname];
+        pg.types.setTypeParser(type.oid, parser);
+        if (type.typarray) {
+          pg.types.setTypeParser(type.typarray, arrayParser(parser));
+        }
+      }),
+    )
     .then(() => true);
 };

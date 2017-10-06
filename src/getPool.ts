@@ -37,10 +37,8 @@ const transaction = (pool: DbPool): Transaction => {
     const opts = typeof x === "function" ? defaultTxOptions : x;
     const fn = typeof x === "function" ? x : y;
 
-    return pool
-      .parsersReady
-      .then(() =>
-        pool.connect().then(client => {
+    return pool.parsersReady.then(() =>
+      pool.connect().then(client => {
         const opening = ["BEGIN TRANSACTION", getIsolationStatement(opts)];
 
         if (opts.readOnly) {
@@ -65,7 +63,8 @@ const transaction = (pool: DbPool): Transaction => {
 
             return Promise.reject(err);
           });
-      }));
+      }),
+    );
   }
 };
 
