@@ -9,10 +9,7 @@ type QueryTaskFactory = (db: DbPool) => (transformer: DbResponseTransformer) => 
 const getQuery: QueryFactory = db => transformer => (query, txOpts) => {
   const pool = get(txOpts, "tx", db);
 
-  // Quick hotfix for now (@hammer to do something smarter at a later date)
-  pool.parsersReady = db.parsersReady;
-
-  return pool
+  return db
     .parsersReady
     .then(() => pool.query(query))
     .then(transformer);
@@ -22,10 +19,7 @@ const getQueryTask: QueryTaskFactory = db => transformer => (query, txOpts) =>
   new Task(() => {
     const pool = get(txOpts, "tx", db);
 
-    // Quick hotfix for now (@hammer to do something smarter at a later date)
-    pool.parsersReady = db.parsersReady;
-
-    return pool
+    return db
       .parsersReady
       .then(() => pool.query(query))
       .then(transformer);
