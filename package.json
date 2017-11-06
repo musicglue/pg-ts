@@ -9,7 +9,7 @@
   "license": "MIT",
   "scripts": {
     "build": "rm -rf dist/  && tsc",
-    "format": "prettier --write --parser typescript --trailing-comma all --list-different --print-width 100 'src/**/*.ts'",
+    "format": "prettier --write --list-different --parser ${npm_package_prettier_parser} --trailing-comma ${npm_package_prettier_trailingComma} --print-width ${npm_package_prettier_printWidth} 'src/**/*.ts'",
     "prepublishOnly": "npm run build",
     "test": "NODE_ENV=test jest --runInBand"
   },
@@ -56,5 +56,10 @@
     "ts-node": "^3.0.4",
     "tslint": "^5.8.0",
     "typescript": "^2.6.1"
+  },
+  "prettier": {
+    "parser": "typescript",
+    "printWidth": 100,
+    "trailingComma": "all"
   }
 }
