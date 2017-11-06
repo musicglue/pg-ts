@@ -42,19 +42,19 @@
     "testRegex": "/__tests__/.*_test\\.(ts|tsx|js)$"
   },
   "dependencies": {
-    "fp-ts": "^0.5.2",
+    "fp-ts": "^0.6.2",
     "lodash": "^4.17.4",
-    "pg": "^7.3.0"
+    "pg": "^7.4.0"
   },
   "devDependencies": {
-    "@types/jest": "^21.1.1",
-    "@types/lodash": "^4.14.76",
-    "@types/pg": "^7.1.4",
+    "@types/jest": "^21.1.5",
+    "@types/lodash": "^4.14.82",
+    "@types/pg": "^7.1.5",
     "jest": "^21.2.1",
-    "prettier": "^1.7.2",
-    "ts-jest": "^21.0.1",
+    "prettier": "^1.7.4",
+    "ts-jest": "^21.1.4",
     "ts-node": "^3.0.4",
-    "tslint": "^5.2.0",
-    "typescript": "^2.5.3"
+    "tslint": "^5.8.0",
+    "typescript": "^2.6.1"
   }
 }
