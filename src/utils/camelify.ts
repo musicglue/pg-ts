@@ -1,5 +1,7 @@
 import { camelCase, curry, flowRight as compose, fromPairs, zip } from "lodash";
 
+export type CamelCaseifier = (x: any) => any;
+
 type checker = (a: any) => boolean;
 type transformer = (input: any) => any;
 
@@ -24,6 +26,9 @@ const transform: any = compose(
   mapKeys(applyIf((x: any) => typeof x === "string" && !x.startsWith("_"), camelCase)),
 ) as transformer;
 
-const camelCaseify = applyIf((x: any) => x != null && typeof x === "object", transform);
+const camelCaseify: CamelCaseifier = applyIf(
+  (x: any) => x != null && typeof x === "object",
+  transform,
+);
 
 export default camelCaseify;
