@@ -12,9 +12,9 @@ describe("Utils", () => {
 
       beforeEach(() => {
         let i = 0;
-        const seqGen = (value: any): number => {
+        const seqGen = (value: any): string => {
           i++;
-          return i;
+          return `$${i}`;
         };
         res = fragment(seqGen);
       });
