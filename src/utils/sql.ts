@@ -1,6 +1,6 @@
 import * as pg from "pg";
 
-type IndexGetter = (value: any) => number;
+type IndexGetter = (value: any) => string;
 
 export const SQLFragment = (parts: TemplateStringsArray, ...inValues: any[]) => (
   getValueIndex: IndexGetter,
