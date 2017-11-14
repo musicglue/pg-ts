@@ -1,4 +1,4 @@
-import { SQL, SQLFragment } from "../../src/utils/sql";
+import { SQL, SQLFragment, SQLUnsafeRaw } from "../../src/utils/sql";
 
 describe("Utils", () => {
   describe("SQL utilities", () => {
@@ -12,9 +12,9 @@ describe("Utils", () => {
 
       beforeEach(() => {
         let i = 0;
-        const seqGen = (value: any): number => {
+        const seqGen = (value: any): string => {
           i++;
-          return i;
+          return `$${i}`;
         };
         res = fragment(seqGen);
       });
@@ -29,6 +29,39 @@ describe("Utils", () => {
 
       it("does not return the variables interpolated", () => {
         expect(res).not.toEqual("SELECT * FROM example WHERE column = 10");
+      });
+    });
+
+    describe("for sql literals", () => {
+      const dynamic = "beep_boop";
+
+      it("returns a function", () => {
+        const sqlLit = SQLUnsafeRaw`${dynamic}`;
+
+        expect(sqlLit).toBeInstanceOf(Function);
+      });
+
+      it("...which returns the interpolated string", () => {
+        const sqlLit = SQLUnsafeRaw`${dynamic}`;
+
+        expect(sqlLit()).toEqual(`${dynamic}`);
+      });
+
+      describe("in statements", () => {
+        const statement = SQL`SELECT "${SQLUnsafeRaw`${dynamic}`}" FROM hello_world`;
+
+        it("returns the interpolated string", () => {
+          expect(statement.text).toEqual(`SELECT "${dynamic}" FROM hello_world`);
+        });
+      });
+
+      describe("in fragments", () => {
+        const fragment = SQLFragment`SELECT "${SQLUnsafeRaw`${dynamic}`}" FROM hello_world`;
+        const mockGen = jest.fn(v => (typeof v === "function" ? `${v()}` : `${v}`));
+
+        it("returns the interpolated string", () => {
+          expect(fragment(mockGen)).toEqual(`SELECT "${dynamic}" FROM hello_world`);
+        });
       });
     });
 
@@ -147,14 +180,14 @@ describe("Utils", () => {
           });
 
           it("matches populated arrays", () => {
-            value = {a: 10};
+            value = { a: 10 };
             res = SQL`${value} = ${value}`;
             expect(res).toHaveProperty("text", "$1 = $1");
             expect(res).toHaveProperty("values", [value]);
           });
 
           it("matches nested arrays", () => {
-            value = {a: {b: 10}};
+            value = { a: { b: 10 } };
             res = SQL`${value} = ${value}`;
             expect(res).toHaveProperty("text", "$1 = $1");
             expect(res).toHaveProperty("values", [value]);
