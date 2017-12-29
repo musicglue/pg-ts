@@ -1,3 +1,5 @@
+import { camelCase, constant } from "lodash";
+import { camelCaseifier } from "../../src/utils/camelify";
 import camelify from "../../src/utils/camelify";
 
 describe("Utils", () => {
@@ -38,6 +40,46 @@ describe("Utils", () => {
     it("does not stringify dates", () => {
       const date = new Date();
       expect(camelify({ date })).toEqual({ date });
+    });
+
+    describe("Configurable exclude list", () => {
+      it("ignores underscore prefixed fields by default", () =>
+        expect(camelify({ __hello_world: "Hello World" })).toEqual({
+          __hello_world: "Hello World",
+        }));
+
+      it("takes a predicate function for exclusion", () => {
+        const camelifyAll = camelCaseifier({ exclude: constant(false) });
+
+        expect(camelifyAll({ __hello_world: "Hello World" })).toEqual({
+          helloWorld: "Hello World",
+        });
+      });
+
+      it("takes a keyMapper function", () => {
+        const underscorePreservingCamelCase = (k: string) => {
+          const matches = k.match(/^(_*)?(.*?)(_*)?$/);
+          if (matches == null) {
+            return null;
+          }
+          const [, prefix = "", middle, suffix = ""] = matches;
+          return `${prefix}${camelCase(middle)}${suffix}`;
+        };
+        const camelifyAll = camelCaseifier({
+          exclude: constant(false),
+          keyMapper: underscorePreservingCamelCase,
+        });
+
+        expect(camelifyAll({ __hello_world: "Hello World" })).toEqual({
+          __helloWorld: "Hello World",
+        });
+        expect(camelifyAll({ hello_world__: "Hello World" })).toEqual({
+          helloWorld__: "Hello World",
+        });
+        expect(camelifyAll({ __hello_world__: "Hello World" })).toEqual({
+          __helloWorld__: "Hello World",
+        });
+      });
     });
   });
 });
