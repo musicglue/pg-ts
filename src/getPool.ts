@@ -14,6 +14,7 @@ import {
   TxOptions,
 } from "./index";
 import setupParsers from "./parsing";
+import { PostProcessingConfig } from "./types";
 
 pg.defaults.poolSize = parseInt(process.env.PG_POOL_SIZE || "10", 10);
 
@@ -79,12 +80,12 @@ const transactionTask = (pool: DbPool): TransactionTask => {
   }
 };
 
-export default (config: PoolConfig): DbPool => {
-  const pool = new pg.Pool(config) as DbPool;
+export default (poolConfig: PoolConfig, postProcessingConfig?: PostProcessingConfig): DbPool => {
+  const pool = new pg.Pool(poolConfig) as DbPool;
 
-  pool.parsersReady = setupParsers(pool, config.parsers);
+  pool.parsersReady = setupParsers(pool, poolConfig.parsers);
   setupPoolEvents(pool);
-  setupPoolAssertions(pool);
+  setupPoolAssertions(pool, postProcessingConfig);
 
   pool.transaction = transaction(pool);
   pool.transactionTask = transactionTask(pool);

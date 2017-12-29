@@ -1,7 +1,12 @@
 import { Task } from "fp-ts/lib/Task";
 import * as pg from "pg";
+import { CamelifyOptions } from "./utils/camelify";
 
+export interface PostProcessingConfig {
+  camelCaser: CamelifyOptions;
+}
 export type DbResponseTransformer = (result: DbResponse) => QueryResponse;
+export type DbResponseTransformerFactory = (config: PostProcessingConfig) => DbResponseTransformer;
 export type QueryResponse = void | any | any[];
 
 export type Query = (query: pg.QueryConfig, txOpts?: TxOptions) => Promise<QueryResponse>;

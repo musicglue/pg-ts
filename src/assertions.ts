@@ -1,6 +1,6 @@
 import { Task } from "fp-ts/lib/Task";
 import { get } from "lodash";
-import { DbPool, DbResponseTransformer, Query, QueryTask } from ".";
+import { DbPool, DbResponseTransformer, PostProcessingConfig, Query, QueryTask } from ".";
 import { any, none, one, oneOrMany, oneOrNone } from "./dbResponseTransformers";
 
 type QueryFactory = (db: DbPool) => (transformer: DbResponseTransformer) => Query;
@@ -19,24 +19,30 @@ const getQueryTask: QueryTaskFactory = db => transformer => (query, txOpts) =>
     return db.parsersReady.then(() => pool.query(query)).then(transformer);
   });
 
-export default (db: DbPool): DbPool => {
+export default (db: DbPool, postProcessingConfig: PostProcessingConfig): DbPool => {
   const transformQuery = getQuery(db);
   const transformQueryTask = getQueryTask(db);
 
-  db.any = transformQuery(any);
-  db.anyTask = transformQueryTask(any);
+  const anyTransform = any(postProcessingConfig);
+  const noneTransform = none(postProcessingConfig);
+  const oneTransform = one(postProcessingConfig);
+  const oneOrManyTransform = oneOrMany(postProcessingConfig);
+  const oneOrNoneTransform = oneOrNone(postProcessingConfig);
 
-  db.none = transformQuery(none);
-  db.noneTask = transformQueryTask(none);
+  db.any = transformQuery(anyTransform);
+  db.anyTask = transformQueryTask(anyTransform);
 
-  db.one = transformQuery(one);
-  db.oneTask = transformQueryTask(one);
+  db.none = transformQuery(noneTransform);
+  db.noneTask = transformQueryTask(noneTransform);
 
-  db.oneOrMany = transformQuery(oneOrMany);
-  db.oneOrManyTask = transformQueryTask(oneOrMany);
+  db.one = transformQuery(oneTransform);
+  db.oneTask = transformQueryTask(oneTransform);
 
-  db.oneOrNone = transformQuery(oneOrNone);
-  db.oneOrNoneTask = transformQueryTask(oneOrNone);
+  db.oneOrMany = transformQuery(oneOrManyTransform);
+  db.oneOrManyTask = transformQueryTask(oneOrManyTransform);
+
+  db.oneOrNone = transformQuery(oneOrNoneTransform);
+  db.oneOrNoneTask = transformQueryTask(oneOrNoneTransform);
 
   return db;
 };
