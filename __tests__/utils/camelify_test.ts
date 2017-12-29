@@ -18,7 +18,7 @@ describe("Utils", () => {
       expect(camelify(candidate)).toEqual({ helloWorld: "hi" });
     });
 
-    it.only("does not stringify dates", () => {
+    it("does not stringify dates", () => {
       const date = new Date();
       expect(camelify({ date })).toEqual({ date });
     });
