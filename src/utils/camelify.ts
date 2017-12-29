@@ -2,18 +2,18 @@ import { camelCase, curry, flowRight as compose, fromPairs, zip } from "lodash";
 
 export type CamelCaseifier = (x: any) => any;
 
-type checker = (a: any) => boolean;
-type transformer = (input: any) => any;
+type PredicateFn = (a: any) => boolean;
+type TransformFn = (input: any) => any;
 
-const applyIf = curry((p: checker, f: transformer, x: any) => (p(x) ? f(x) : x));
-const mapKeys = curry((f: transformer, x: any) =>
+const applyIf = curry((p: PredicateFn, f: TransformFn, x: any) => (p(x) ? f(x) : x));
+const mapKeys = curry((f: TransformFn, x: any) =>
   fromPairs(zip(Object.keys(x).map(f), Object.values(x))),
 );
-const mapValues = curry((f: transformer, x: any) =>
+const mapValues = curry((f: TransformFn, x: any) =>
   fromPairs(zip(Object.keys(x), Object.values(x).map(f))),
 );
 
-const transform: any = compose(
+const transform: TransformFn = compose(
   mapValues((v: any) => {
     if (v == null || typeof v !== "object" || v instanceof Date) {
       return v;
@@ -24,7 +24,7 @@ const transform: any = compose(
     return camelCaseify(v);
   }),
   mapKeys(applyIf((x: any) => typeof x === "string" && !x.startsWith("_"), camelCase)),
-) as transformer;
+);
 
 const camelCaseify: CamelCaseifier = applyIf(
   (x: any) => x != null && typeof x === "object",
