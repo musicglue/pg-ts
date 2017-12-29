@@ -6,11 +6,13 @@ type PredicateFn = (a: any) => boolean;
 type TransformFn = (input: any) => any;
 
 const applyIf = curry((p: PredicateFn, f: TransformFn, x: any) => (p(x) ? f(x) : x));
-const mapKeys = curry((f: TransformFn, x: any) =>
-  fromPairs(zip(Object.keys(x).map(f), Object.values(x))),
+const mapKeys = curry(
+  (f: TransformFn, x: any) =>
+    Array.isArray(x) ? x : fromPairs(zip(Object.keys(x).map(f), Object.values(x))),
 );
-const mapValues = curry((f: TransformFn, x: any) =>
-  fromPairs(zip(Object.keys(x), Object.values(x).map(f))),
+const mapValues = curry(
+  (f: TransformFn, x: any) =>
+    Array.isArray(x) ? x.map(f) : fromPairs(zip(Object.keys(x), Object.values(x).map(f))),
 );
 
 const transform: TransformFn = compose(
