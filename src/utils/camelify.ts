@@ -1,34 +1,40 @@
-import { camelCase, curry, flowRight as compose, fromPairs, zip } from "lodash";
+import { camelCase, fromPairs, negate, toPairs } from "lodash";
 
-export type CamelCaseifier = (x: any) => any;
+export type PredicateFn = (a: any) => boolean;
+export type MapFn<A = any, B = any> = (x: A) => B;
+export type KeyMapFn = MapFn<string, string>;
 
-type checker = (a: any) => boolean;
-type transformer = (input: any) => any;
+export interface CamelifyOptions {
+  exclude: PredicateFn;
+  keyMapper: KeyMapFn;
+}
 
-const applyIf = curry((p: checker, f: transformer, x: any) => (p(x) ? f(x) : x));
-const mapKeys = curry((f: transformer, x: any) =>
-  fromPairs(zip(Object.keys(x).map(f), Object.values(x))),
-);
-const mapValues = curry((f: transformer, x: any) =>
-  fromPairs(zip(Object.keys(x), Object.values(x).map(f))),
-);
+export const when = (p: PredicateFn, f: MapFn) => (x: any) => (p(x) ? f(x) : x);
 
-const transform: any = compose(
-  mapValues((v: any) => {
-    if (v == null || typeof v !== "object" || v instanceof Date) {
-      return v;
-    }
-    if (Array.isArray(v)) {
-      return v.map(camelCaseify);
-    }
-    return camelCaseify(v);
-  }),
-  mapKeys(applyIf((x: any) => typeof x === "string" && !x.startsWith("_"), camelCase)),
-) as transformer;
+const isMappable = (x: any) => x != null && typeof x === "object" && !(x instanceof Date);
 
-const camelCaseify: CamelCaseifier = applyIf(
-  (x: any) => x != null && typeof x === "object",
-  transform,
-);
+const defaultOptions = {};
+const defaultConfig: CamelifyOptions = {
+  exclude: (k: string) => k.startsWith("_"),
+  keyMapper: camelCase,
+};
 
-export default camelCaseify;
+export const camelCaseifier = (options: Partial<CamelifyOptions> = defaultOptions) => {
+  const config = { ...defaultConfig, ...options };
+  const { exclude, keyMapper } = config;
+  const mapKey = when(negate(exclude), keyMapper);
+
+  const transformFn = when(
+    isMappable,
+    x =>
+      Array.isArray(x)
+        ? x.map(transformFn)
+        : {
+            ...fromPairs(toPairs(x).map(([k, v]) => [mapKey(k), transformFn(v)])),
+          },
+  );
+
+  return transformFn;
+};
+
+export default camelCaseifier();
