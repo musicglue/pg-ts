@@ -26,7 +26,7 @@ pool.transaction(tx =>
     .then(([,person]) => person));
 ```
 
-Using fp-ts BTasks:
+Using [fp-ts](https://github.com/gcanti/fp-ts) Tasks:
 
 ```ts
 import getPool, { SQL } from "pg-ts";
