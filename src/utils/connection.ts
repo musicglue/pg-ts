@@ -1,6 +1,7 @@
+import { mixed } from "io-ts";
 import * as url from "url";
 
-export default (str: string) => {
+export const parseConnectionString = (str: string): mixed => {
   let candidate: string = str;
 
   // unix socket

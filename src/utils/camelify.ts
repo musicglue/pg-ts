@@ -1,40 +1,49 @@
-import { camelCase, fromPairs, negate, toPairs } from "lodash";
-
-export type PredicateFn = (a: any) => boolean;
-export type MapFn<A = any, B = any> = (x: A) => B;
-export type KeyMapFn = MapFn<string, string>;
+import { constant, not, Predicate } from "fp-ts/lib/function";
+import { fromNullable } from "fp-ts/lib/Option";
+import { mixed } from "io-ts";
+import { camelCase, fromPairs, isArray, isDate, isObject as _isObject, toPairs } from "lodash";
 
 export interface CamelifyOptions {
-  exclude: PredicateFn;
-  keyMapper: KeyMapFn;
+  exclude: Predicate<string>;
+  keyMapper: (s: string) => string;
 }
 
-export const when = (p: PredicateFn, f: MapFn) => (x: any) => (p(x) ? f(x) : x);
+const isMappable: Predicate<mixed> = x =>
+  fromNullable(x)
+    .filter(z => isObject(z))
+    .filter(z => not(isDate)(z))
+    .fold(constant(false), constant(true));
 
-const isMappable = (x: any) => x != null && typeof x === "object" && !(x instanceof Date);
-
-const defaultOptions = {};
-const defaultConfig: CamelifyOptions = {
+const defaultOptions: CamelifyOptions = {
   exclude: (k: string) => k.startsWith("_"),
   keyMapper: camelCase,
 };
 
-export const camelCaseifier = (options: Partial<CamelifyOptions> = defaultOptions) => {
-  const config = { ...defaultConfig, ...options };
-  const { exclude, keyMapper } = config;
-  const mapKey = when(negate(exclude), keyMapper);
+const isObject = (x: mixed): x is object => _isObject(x);
 
-  const transformFn = when(
-    isMappable,
-    x =>
-      Array.isArray(x)
-        ? x.map(transformFn)
-        : {
-            ...fromPairs(toPairs(x).map(([k, v]) => [mapKey(k), transformFn(v)])),
-          },
-  );
+const transform = (options: CamelifyOptions) => (x: mixed): mixed => {
+  const { exclude, keyMapper } = options;
 
-  return transformFn;
+  if (!isMappable(x)) {
+    return x;
+  }
+
+  if (isArray(x)) {
+    return x.map(transform(options));
+  }
+
+  if (isObject(x)) {
+    return {
+      ...fromPairs(
+        toPairs(x).map(([k, v]) => [exclude(k) ? k : keyMapper(k), transform(options)(v)]),
+      ),
+    };
+  }
+
+  return x;
 };
 
-export default camelCaseifier();
+export const makeCamelCaser = (options?: Partial<CamelifyOptions>) =>
+  transform({ ...defaultOptions, ...options });
+
+export const defaultCamelCaser = makeCamelCaser();

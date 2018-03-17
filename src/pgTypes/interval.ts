@@ -1,4 +1,5 @@
 type PGIntervalField = "seconds" | "minutes" | "hours" | "days" | "months" | "years";
+
 interface PGIntervalObject<T> {
   [key: string]: T;
   milliseconds?: T;
@@ -89,7 +90,7 @@ const buildProperty = (parsed: PGIntervalObject<number>) => (prop: PGIntervalFie
   return `${value}${isoEquiv}`;
 };
 
-export default (raw: string): string => {
+export const parseInterval = (raw: string): string => {
   const parsed = parse(raw);
   const datePart = dateProps.map(buildProperty(parsed)).join("");
   const timePart = timeProps.map(buildProperty(parsed)).join("");

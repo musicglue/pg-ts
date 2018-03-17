@@ -1,16 +1,17 @@
+import { mixed } from "io-ts";
 import * as pg from "pg";
 
-type IndexGetter = (value: any) => string;
+type IndexGetter = (value: mixed) => string;
 
-export const SQLFragment = (parts: TemplateStringsArray, ...inValues: any[]) => (
+export const SQLFragment = (parts: TemplateStringsArray, ...inValues: mixed[]) => (
   getValueIndex: IndexGetter,
 ): string =>
   parts.reduce((prev, curr, valIdx) => `${prev}${getValueIndex(inValues[valIdx - 1])}${curr}`);
 
 export const SQL = (parts: TemplateStringsArray, ...inValues: any[]): pg.QueryConfig => {
-  const outValues: any[] = [];
+  const outValues: mixed[] = [];
 
-  const getValueIndex = (value: any): string => {
+  const getValueIndex = (value: mixed): string => {
     if (value == null) {
       return `NULL`;
     }

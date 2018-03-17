@@ -1,6 +1,5 @@
 import { camelCase, constant } from "lodash";
-import { camelCaseifier } from "../../src/utils/camelify";
-import camelify from "../../src/utils/camelify";
+import { defaultCamelCaser as camelify, makeCamelCaser } from "../../src/utils/camelify";
 
 describe("Utils", () => {
   describe("Camelisation", () => {
@@ -49,7 +48,7 @@ describe("Utils", () => {
         }));
 
       it("takes a predicate function for exclusion", () => {
-        const camelifyAll = camelCaseifier({ exclude: constant(false) });
+        const camelifyAll = makeCamelCaser({ exclude: constant(false) });
 
         expect(camelifyAll({ __hello_world: "Hello World" })).toEqual({
           helloWorld: "Hello World",
@@ -65,7 +64,7 @@ describe("Utils", () => {
           const [, prefix = "", middle, suffix = ""] = matches;
           return `${prefix}${camelCase(middle)}${suffix}`;
         };
-        const camelifyAll = camelCaseifier({
+        const camelifyAll = makeCamelCaser({
           exclude: constant(false),
           keyMapper: underscorePreservingCamelCase,
         });

@@ -1,7 +1,16 @@
-import getPool from "./getPool";
+import { makePool } from "./pool";
+import { queryAny, queryNone, queryOne, queryOneOrMore, queryOneOrNone } from "./query";
+import { parseConnectionString } from "./utils/connection";
+import { SQL, SQLFragment } from "./utils/sql";
 
-export { default as parse } from "./utils/connection";
-export * from "./utils/sql";
-export * from "./types";
-
-export default getPool;
+export {
+  makePool,
+  parseConnectionString,
+  queryAny,
+  queryNone,
+  queryOne,
+  queryOneOrMore,
+  queryOneOrNone,
+  SQL,
+  SQLFragment,
+};
