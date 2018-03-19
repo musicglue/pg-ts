@@ -1,5 +1,6 @@
 import { Pool, PoolConfig } from "pg";
-import { ParserSetup, setupParsers, TypeParsers } from "./parser";
+import { setupParsers, TypeParsers } from "./parser";
+import { QueryConnection } from "./query";
 import { BeginTransaction, makeTransactionFactory } from "./transaction";
 
 export interface ParsingPoolConfig extends PoolConfig {
@@ -7,10 +8,8 @@ export interface ParsingPoolConfig extends PoolConfig {
   parsers?: TypeParsers;
 }
 
-export interface ParsingPool {
+export interface ParsingPool extends QueryConnection {
   beginTransaction: BeginTransaction;
-  parserSetup: ParserSetup;
-  pool: Pool;
 }
 
 export const makePool = (poolConfig: ParsingPoolConfig): ParsingPool => {
@@ -22,7 +21,7 @@ export const makePool = (poolConfig: ParsingPoolConfig): ParsingPool => {
 
   return {
     beginTransaction: makeTransactionFactory(pool, parserSetup),
+    connection: pool,
     parserSetup,
-    pool,
   };
 };

@@ -1,8 +1,9 @@
 import { Either } from "fp-ts/lib/Either";
 import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
-import { Pool, PoolClient } from "pg";
+import { Pool } from "pg";
 import { mapCatchToError } from "./errors";
 import { ParserSetup } from "./parser";
+import { QueryConnection } from "./query";
 
 const defaultTxOptions: TxOptions = {
   deferrable: false,
@@ -25,7 +26,7 @@ export interface TxOptions {
   readonly readOnly: boolean;
 }
 
-export type TransactionScope<T> = (tx: PoolClient) => TaskEither<Error, T>;
+export type TransactionScope<T> = (tx: QueryConnection) => TaskEither<Error, T>;
 
 export interface BeginTransaction {
   <T>(x: TxOptions, y: TransactionScope<T>): TaskEither<Error, T>;
@@ -57,7 +58,7 @@ export const makeTransactionFactory = (pool: Pool, parserSetup: ParserSetup): Be
             return Promise.resolve(opening.join(" "))
               .then(openings => client.query(openings))
               .then(() =>
-                transactionScope(client)
+                transactionScope({ connection: client, parserSetup })
                   .run()
                   .then(eitherToPromise),
               )

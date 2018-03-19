@@ -4,9 +4,9 @@ import { of as taskOf } from "fp-ts/lib/Task";
 import { fromEither, left, right, TaskEither } from "fp-ts/lib/TaskEither";
 import * as t from "io-ts";
 import { Errors, mixed } from "io-ts";
-import { PoolClient, QueryConfig } from "pg";
-import { executeQuery as driverExecuteQuery, QueryResult } from "./driver";
-import { ParsingPool } from "./pool";
+import { QueryConfig } from "pg";
+import { Connection, executeQuery as driverExecuteQuery, QueryResult } from "./driver";
+import { ParserSetup } from "./parser";
 import { CamelifyOptions, makeCamelCaser as _makeCamelCaser } from "./utils/camelify";
 
 export interface DbResponse {
@@ -17,11 +17,15 @@ export interface PostProcessingConfig {
   camelCaser: CamelifyOptions;
 }
 
+export interface QueryConnection {
+  connection: Connection;
+  parserSetup: ParserSetup;
+}
+
 const executeQuery = (
   query: QueryConfig,
-  { parserSetup, pool }: ParsingPool,
-  tx?: PoolClient,
-): TaskEither<Error, QueryResult> => parserSetup.chain(() => driverExecuteQuery(tx || pool, query));
+  { connection, parserSetup }: QueryConnection,
+): TaskEither<Error, QueryResult> => parserSetup.chain(() => driverExecuteQuery(connection, query));
 
 const makeCamelCaser = (config: PostProcessingConfig) => {
   const camelcase = _makeCamelCaser(config.camelCaser);
@@ -48,10 +52,9 @@ export const queryAny = (config: PostProcessingConfig) => {
   const camelCase = makeCamelCaser(config);
 
   return <S, A>(type: t.Type<S, A>, query: QueryConfig) => (
-    pool: ParsingPool,
-    tx?: PoolClient,
+    queryConnection: QueryConnection,
   ): TaskEither<Error | Errors, A[]> =>
-    executeQuery(query, pool, tx)
+    executeQuery(query, queryConnection)
       .mapLeft((err): Error | Errors => err)
       .chain(result =>
         fromEither(t.validate(camelCase(result.rows), t.array(type))).mapLeft(
@@ -61,10 +64,9 @@ export const queryAny = (config: PostProcessingConfig) => {
 };
 
 export const queryNone = (query: QueryConfig) => (
-  pool: ParsingPool,
-  tx?: PoolClient,
+  queryConnection: QueryConnection,
 ): TaskEither<Error, void> =>
-  executeQuery(query, pool, tx).chain(result => {
+  executeQuery(query, queryConnection).chain(result => {
     if (result.rows.length > 0) {
       return left<Error, void>(taskOf(new ResponseNumberError(expectedNoneFoundSome)));
     }
@@ -76,10 +78,9 @@ export const queryOne = (config: PostProcessingConfig) => {
   const camelCase = makeCamelCaser(config);
 
   return <S, A>(type: t.Type<S, A>, query: QueryConfig) => (
-    pool: ParsingPool,
-    tx?: PoolClient,
+    queryConnection: QueryConnection,
   ): TaskEither<Error | Errors, A> =>
-    executeQuery(query, pool, tx)
+    executeQuery(query, queryConnection)
       .mapLeft((err): Error | Errors => err)
       .chain(result => {
         if (result.rows.length === 0) {
@@ -98,10 +99,9 @@ export const queryOneOrMore = (config: PostProcessingConfig) => {
   const camelCase = makeCamelCaser(config);
 
   return <S, A>(type: t.Type<S, A>, query: QueryConfig) => (
-    pool: ParsingPool,
-    tx?: PoolClient,
+    queryConnection: QueryConnection,
   ): TaskEither<Error | Errors, NonEmptyArray<A>> =>
-    executeQuery(query, pool, tx)
+    executeQuery(query, queryConnection)
       .mapLeft((err): Error | Errors => err)
       .chain(result =>
         fromEither(t.validate(camelCase(result.rows), t.array(type)))
@@ -122,10 +122,9 @@ export const queryOneOrNone = (config: PostProcessingConfig) => {
   const camelCase = makeCamelCaser(config);
 
   return <S, A>(type: t.Type<S, A>, query: QueryConfig) => (
-    pool: ParsingPool,
-    tx?: PoolClient,
+    queryConnection: QueryConnection,
   ): TaskEither<Error | Errors, Option<A>> =>
-    executeQuery(query, pool, tx)
+    executeQuery(query, queryConnection)
       .mapLeft((err): Error | Errors => err)
       .chain(result => {
         if (result.rows.length > 1) {
