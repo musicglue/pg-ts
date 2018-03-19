@@ -10,8 +10,8 @@ export interface CamelifyOptions {
 
 const isMappable: Predicate<mixed> = x =>
   fromNullable(x)
-    .filter(z => isObject(z))
-    .filter(z => not(isDate)(z))
+    .filter(isObject)
+    .filter(not(isDate))
     .fold(constant(false), constant(true));
 
 const defaultOptions: CamelifyOptions = {

@@ -1,6 +1,6 @@
 import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
 import { Pool, types as pgTypes } from "pg";
-import { isError } from "util";
+import { mapCatchToError } from "./errors";
 import { parseInterval } from "./pgTypes/interval";
 import { SQL } from "./utils/sql";
 
@@ -20,18 +20,6 @@ ORDER BY oid;`;
 
 const arrayParser = (typeParser: TypeParser<any>) => (input: string) =>
   pgTypes.arrayParser.create(input, typeParser).parse();
-
-const mapCatchToError = (caught: {}): Error => {
-  if (isError(caught)) {
-    return caught;
-  }
-
-  const error = new Error("pg driver rejected promise");
-
-  (error as any).caught = caught;
-
-  return error;
-};
 
 export const setupParsers = (pool: Pool, parsers: TypeParsers): ParserSetup => {
   const parserSet: TypeParsers = { interval: parseInterval, ...parsers };

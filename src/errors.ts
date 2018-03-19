@@ -1,4 +1,4 @@
-import { isError } from "util";
+import { isError } from "lodash";
 
 export const mapCatchToError = (caught: {}): Error => {
   if (isError(caught)) {
