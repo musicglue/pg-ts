@@ -21,29 +21,33 @@ const defaultOptions: CamelifyOptions = {
 
 const isObject = (x: mixed): x is object => _isObject(x);
 
-const transform = (options: CamelifyOptions) => (x: mixed): mixed => {
-  const { exclude, keyMapper } = options;
+const transform = (options: CamelifyOptions) => {
+  const transformer = (x: mixed): mixed => {
+    const { exclude, keyMapper } = options;
 
-  if (!isMappable(x)) {
+    if (!isMappable(x)) {
+      return x;
+    }
+
+    if (isArray(x)) {
+      return x.map(transformer);
+    }
+
+    if (isObject(x)) {
+      return {
+        ...fromPairs(toPairs(x).map(([k, v]) => [exclude(k) ? k : keyMapper(k), transformer(v)])),
+      };
+    }
+
     return x;
-  }
+  };
 
-  if (isArray(x)) {
-    return x.map(transform(options));
-  }
-
-  if (isObject(x)) {
-    return {
-      ...fromPairs(
-        toPairs(x).map(([k, v]) => [exclude(k) ? k : keyMapper(k), transform(options)(v)]),
-      ),
-    };
-  }
-
-  return x;
+  return transformer;
 };
 
-export const makeCamelCaser = (options?: Partial<CamelifyOptions>) =>
-  transform({ ...defaultOptions, ...options });
+export const makeCamelCaser = (options?: Partial<CamelifyOptions>) => {
+  const transformer = transform({ ...defaultOptions, ...options });
+  return (xs: mixed[]): mixed[] => xs.map(transformer);
+};
 
 export const defaultCamelCaser = makeCamelCaser();
