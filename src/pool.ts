@@ -10,6 +10,7 @@ export interface ParsingPoolConfig extends PoolConfig {
 
 export interface ParsingPool extends QueryConnection {
   beginTransaction: BeginTransaction;
+  connection: Pool;
 }
 
 export const makePool = (poolConfig: ParsingPoolConfig): ParsingPool => {
