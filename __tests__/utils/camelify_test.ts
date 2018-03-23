@@ -4,9 +4,9 @@ import { defaultCamelCaser as camelify, makeCamelCaser } from "../../src/utils/c
 describe("Utils", () => {
   describe("Camelisation", () => {
     describe("Scalars pass through unaltered", () => {
-      it("strings", () => expect(camelify("hello_world")).toEqual("hello_world"));
-      it("numbers", () => expect(camelify(123)).toEqual(123));
-      it("booleans", () => expect(camelify(false)).toEqual(false));
+      it("strings", () => expect(camelify(["hello_world"])).toEqual(["hello_world"]));
+      it("numbers", () => expect(camelify([123])).toEqual([123]));
+      it("booleans", () => expect(camelify([false])).toEqual([false]));
     });
 
     describe("Array keys are unaltered", () => {
@@ -33,26 +33,30 @@ describe("Utils", () => {
 
     it("camelises simple objects", () => {
       const candidate = { hello_world: "hi" };
-      expect(camelify(candidate)).toEqual({ helloWorld: "hi" });
+      expect(camelify([candidate])).toEqual([{ helloWorld: "hi" }]);
     });
 
     it("does not stringify dates", () => {
       const date = new Date();
-      expect(camelify({ date })).toEqual({ date });
+      expect(camelify([{ date }])).toEqual([{ date }]);
     });
 
     describe("Configurable exclude list", () => {
       it("ignores underscore prefixed fields by default", () =>
-        expect(camelify({ __hello_world: "Hello World" })).toEqual({
-          __hello_world: "Hello World",
-        }));
+        expect(camelify([{ __hello_world: "Hello World" }])).toEqual([
+          {
+            __hello_world: "Hello World",
+          },
+        ]));
 
       it("takes a predicate function for exclusion", () => {
         const camelifyAll = makeCamelCaser({ exclude: constant(false) });
 
-        expect(camelifyAll({ __hello_world: "Hello World" })).toEqual({
-          helloWorld: "Hello World",
-        });
+        expect(camelifyAll([{ __hello_world: "Hello World" }])).toEqual([
+          {
+            helloWorld: "Hello World",
+          },
+        ]);
       });
 
       it("takes a keyMapper function", () => {
@@ -69,15 +73,21 @@ describe("Utils", () => {
           keyMapper: underscorePreservingCamelCase,
         });
 
-        expect(camelifyAll({ __hello_world: "Hello World" })).toEqual({
-          __helloWorld: "Hello World",
-        });
-        expect(camelifyAll({ hello_world__: "Hello World" })).toEqual({
-          helloWorld__: "Hello World",
-        });
-        expect(camelifyAll({ __hello_world__: "Hello World" })).toEqual({
-          __helloWorld__: "Hello World",
-        });
+        expect(camelifyAll([{ __hello_world: "Hello World" }])).toEqual([
+          {
+            __helloWorld: "Hello World",
+          },
+        ]);
+        expect(camelifyAll([{ hello_world__: "Hello World" }])).toEqual([
+          {
+            helloWorld__: "Hello World",
+          },
+        ]);
+        expect(camelifyAll([{ __hello_world__: "Hello World" }])).toEqual([
+          {
+            __helloWorld__: "Hello World",
+          },
+        ]);
       });
     });
   });
