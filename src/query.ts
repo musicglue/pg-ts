@@ -40,8 +40,12 @@ const expectedOneNoneFound = "Query returned no rows but one row was expected";
 const expectedOneOrNone = "Query returned more than one row but one or none were expected";
 const expectedAtLeastOneRow = "Query returned no rows but rows were expected";
 
-export const queryAny = (transformer: Transformer = identity) => <A>(
-  type: t.Type<A>,
+export const queryAny = (transformer: Transformer = identity) => <
+  T extends t.Type<A, O, t.mixed>,
+  A = any,
+  O = A
+>(
+  type: T,
   query: QueryConfig,
 ) => (queryConnection: QueryConnection): TaskEither<Error | Errors, A[]> =>
   executeQuery(query, queryConnection)
@@ -63,8 +67,12 @@ export const queryNone = (query: QueryConfig) => (
     return right<Error, void>(task.of(undefined as any));
   });
 
-export const queryOne = (transformer: Transformer = identity) => <A>(
-  type: t.Type<A>,
+export const queryOne = (transformer: Transformer = identity) => <
+  T extends t.Type<A, O, t.mixed>,
+  A = any,
+  O = A
+>(
+  type: T,
   query: QueryConfig,
 ) => (queryConnection: QueryConnection): TaskEither<Error | Errors, A> =>
   executeQuery(query, queryConnection)
@@ -81,8 +89,12 @@ export const queryOne = (transformer: Transformer = identity) => <A>(
       return fromEither(type.decode(transformer(result.rows)[0]));
     });
 
-export const queryOneOrMore = (transformer: Transformer = identity) => <A>(
-  type: t.Type<A>,
+export const queryOneOrMore = (transformer: Transformer = identity) => <
+  T extends t.Type<A, O, t.mixed>,
+  A = any,
+  O = A
+>(
+  type: T,
   query: QueryConfig,
 ) => (queryConnection: QueryConnection): TaskEither<Error | Errors, NonEmptyArray<A>> =>
   executeQuery(query, queryConnection)
@@ -101,8 +113,12 @@ export const queryOneOrMore = (transformer: Transformer = identity) => <A>(
         ),
     );
 
-export const queryOneOrNone = (transformer: Transformer = identity) => <A>(
-  type: t.Type<A>,
+export const queryOneOrNone = (transformer: Transformer = identity) => <
+  T extends t.Type<A, O, t.mixed>,
+  A = any,
+  O = A
+>(
+  type: T,
   query: QueryConfig,
 ) => (queryConnection: QueryConnection): TaskEither<Error | Errors, Option<A>> =>
   executeQuery(query, queryConnection)
