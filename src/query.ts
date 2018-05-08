@@ -40,14 +40,10 @@ const expectedOneNoneFound = "Query returned no rows but one row was expected";
 const expectedOneOrNone = "Query returned more than one row but one or none were expected";
 const expectedAtLeastOneRow = "Query returned no rows but rows were expected";
 
-export const queryAny = (transformer: Transformer = identity) => <
-  T extends t.Type<A, O, t.mixed>,
-  A = any,
-  O = A
->(
+export const queryAny = (transformer: Transformer = identity) => <T extends t.Type<any>>(
   type: T,
   query: QueryConfig,
-) => (queryConnection: QueryConnection): TaskEither<Error | Errors, A[]> =>
+) => (queryConnection: QueryConnection): TaskEither<Error | Errors, Array<t.TypeOf<T>>> =>
   executeQuery(query, queryConnection)
     .mapLeft((err): Error | Errors => err)
     .chain(result =>
@@ -67,36 +63,32 @@ export const queryNone = (query: QueryConfig) => (
     return right<Error, void>(task.of(undefined as any));
   });
 
-export const queryOne = (transformer: Transformer = identity) => <
-  T extends t.Type<A, O, t.mixed>,
-  A = any,
-  O = A
->(
+export const queryOne = (transformer: Transformer = identity) => <T extends t.Type<any>>(
   type: T,
   query: QueryConfig,
-) => (queryConnection: QueryConnection): TaskEither<Error | Errors, A> =>
+) => (queryConnection: QueryConnection): TaskEither<Error | Errors, t.TypeOf<T>> =>
   executeQuery(query, queryConnection)
     .mapLeft((err): Error | Errors => err)
     .chain(result => {
       if (result.rows.length === 0) {
-        return left<Error | Errors, A>(task.of(new ResponseNumberError(expectedOneNoneFound)));
+        return left<Error | Errors, t.TypeOf<T>>(
+          task.of(new ResponseNumberError(expectedOneNoneFound)),
+        );
       }
 
       if (result.rows.length > 1) {
-        return left<Error | Errors, A>(task.of(new ResponseNumberError(expectedOneManyFound)));
+        return left<Error | Errors, t.TypeOf<T>>(
+          task.of(new ResponseNumberError(expectedOneManyFound)),
+        );
       }
 
       return fromEither(type.decode(transformer(result.rows)[0]));
     });
 
-export const queryOneOrMore = (transformer: Transformer = identity) => <
-  T extends t.Type<A, O, t.mixed>,
-  A = any,
-  O = A
->(
+export const queryOneOrMore = (transformer: Transformer = identity) => <T extends t.Type<any>>(
   type: T,
   query: QueryConfig,
-) => (queryConnection: QueryConnection): TaskEither<Error | Errors, NonEmptyArray<A>> =>
+) => (queryConnection: QueryConnection): TaskEither<Error | Errors, NonEmptyArray<t.TypeOf<T>>> =>
   executeQuery(query, queryConnection)
     .mapLeft((err): Error | Errors => err)
     .chain(result =>
@@ -105,31 +97,29 @@ export const queryOneOrMore = (transformer: Transformer = identity) => <
         .chain(a =>
           fromArray(a).foldL(
             () =>
-              left<Error | Errors, NonEmptyArray<A>>(
+              left<Error | Errors, NonEmptyArray<t.TypeOf<T>>>(
                 task.of(new ResponseNumberError(expectedAtLeastOneRow)),
               ),
-            array => right<Error | Errors, NonEmptyArray<A>>(task.of(array)),
+            array => right<Error | Errors, NonEmptyArray<t.TypeOf<T>>>(task.of(array)),
           ),
         ),
     );
 
-export const queryOneOrNone = (transformer: Transformer = identity) => <
-  T extends t.Type<A, O, t.mixed>,
-  A = any,
-  O = A
->(
+export const queryOneOrNone = (transformer: Transformer = identity) => <T extends t.Type<any>>(
   type: T,
   query: QueryConfig,
-) => (queryConnection: QueryConnection): TaskEither<Error | Errors, Option<A>> =>
+) => (queryConnection: QueryConnection): TaskEither<Error | Errors, Option<t.TypeOf<T>>> =>
   executeQuery(query, queryConnection)
     .mapLeft((err): Error | Errors => err)
     .chain(result => {
       if (result.rows.length > 1) {
-        return left<Error | Errors, Option<A>>(task.of(new ResponseNumberError(expectedOneOrNone)));
+        return left<Error | Errors, Option<t.TypeOf<T>>>(
+          task.of(new ResponseNumberError(expectedOneOrNone)),
+        );
       }
 
       if (result.rows.length === 0) {
-        return right<Error | Errors, Option<A>>(task.of(none));
+        return right<Error | Errors, Option<t.TypeOf<T>>>(task.of(none));
       }
 
       return fromEither(type.decode(transformer(result.rows)[0])).map(some);
