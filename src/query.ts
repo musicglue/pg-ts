@@ -4,10 +4,16 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { task } from "fp-ts/lib/Task";
 import { fromEither, left, right, TaskEither } from "fp-ts/lib/TaskEither";
 import * as t from "io-ts";
-import { Errors, mixed } from "io-ts";
+import { mixed } from "io-ts";
 import { QueryConfig } from "pg";
 import { Connection, executeQuery as driverExecuteQuery, QueryResult } from "./driver";
 import { ParserSetup } from "./parser";
+import {
+  ErrorFailure,
+  mapToErrorFailure,
+  mapToValidationFailure,
+  QueryFailure,
+} from "./queryFailure";
 
 export interface DbResponse {
   rows: mixed[];
@@ -40,87 +46,103 @@ const expectedOneNoneFound = "Query returned no rows but one row was expected";
 const expectedOneOrNone = "Query returned more than one row but one or none were expected";
 const expectedAtLeastOneRow = "Query returned no rows but rows were expected";
 
-export const queryAny = (transformer: Transformer = identity) => <T extends t.Type<any>>(
+export const queryAny = (transformer: Transformer = identity) => <T extends t.Mixed>(
   type: T,
   query: QueryConfig,
-) => (queryConnection: QueryConnection): TaskEither<Error | Errors, Array<t.TypeOf<T>>> =>
+) => (queryConnection: QueryConnection): TaskEither<QueryFailure<T>, Array<t.TypeOf<T>>> =>
   executeQuery(query, queryConnection)
-    .mapLeft((err): Error | Errors => err)
-    .chain(result =>
-      fromEither(t.array(type).decode(transformer(result.rows))).mapLeft(
-        (err): Error | Errors => err,
-      ),
-    );
+    .mapLeft<QueryFailure<T>>(mapToErrorFailure)
+    .chain(result => {
+      const transformedRows = transformer(result.rows);
+
+      return fromEither(t.array(type).decode(transformedRows)).mapLeft(
+        mapToValidationFailure(type, transformedRows),
+      );
+    });
 
 export const queryNone = (query: QueryConfig) => (
   queryConnection: QueryConnection,
-): TaskEither<Error, void> =>
-  executeQuery(query, queryConnection).chain(result => {
-    if (result.rows.length > 0) {
-      return left<Error, void>(task.of(new ResponseNumberError(expectedNoneFoundSome)));
-    }
+): TaskEither<ErrorFailure, void> =>
+  executeQuery(query, queryConnection)
+    .mapLeft(mapToErrorFailure)
+    .chain((result): TaskEither<ErrorFailure, void> => {
+      if (result.rows.length > 0) {
+        return left<ErrorFailure, void>(
+          task.of(mapToErrorFailure(new ResponseNumberError(expectedNoneFoundSome))),
+        );
+      }
 
-    return right<Error, void>(task.of(undefined as any));
-  });
+      return right<ErrorFailure, void>(task.of(undefined as any));
+    });
 
-export const queryOne = (transformer: Transformer = identity) => <T extends t.Type<any>>(
+export const queryOne = (transformer: Transformer = identity) => <T extends t.Mixed>(
   type: T,
   query: QueryConfig,
-) => (queryConnection: QueryConnection): TaskEither<Error | Errors, t.TypeOf<T>> =>
+) => (queryConnection: QueryConnection): TaskEither<QueryFailure<T>, t.TypeOf<T>> =>
   executeQuery(query, queryConnection)
-    .mapLeft((err): Error | Errors => err)
+    .mapLeft<QueryFailure<T>>(mapToErrorFailure)
     .chain(result => {
       if (result.rows.length === 0) {
-        return left<Error | Errors, t.TypeOf<T>>(
-          task.of(new ResponseNumberError(expectedOneNoneFound)),
+        return left<QueryFailure<T>, t.TypeOf<T>>(
+          task.of(mapToErrorFailure(new ResponseNumberError(expectedOneNoneFound))),
         );
       }
 
       if (result.rows.length > 1) {
-        return left<Error | Errors, t.TypeOf<T>>(
-          task.of(new ResponseNumberError(expectedOneManyFound)),
+        return left<QueryFailure<T>, t.TypeOf<T>>(
+          task.of(mapToErrorFailure(new ResponseNumberError(expectedOneManyFound))),
         );
       }
 
-      return fromEither(type.decode(transformer(result.rows)[0]));
+      const transformedRow = transformer(result.rows)[0];
+
+      return fromEither(type.decode(transformedRow)).mapLeft(
+        mapToValidationFailure(type, transformedRow),
+      );
     });
 
 export const queryOneOrMore = (transformer: Transformer = identity) => <T extends t.Type<any>>(
   type: T,
   query: QueryConfig,
-) => (queryConnection: QueryConnection): TaskEither<Error | Errors, NonEmptyArray<t.TypeOf<T>>> =>
+) => (queryConnection: QueryConnection): TaskEither<QueryFailure<T>, NonEmptyArray<t.TypeOf<T>>> =>
   executeQuery(query, queryConnection)
-    .mapLeft((err): Error | Errors => err)
-    .chain(result =>
-      fromEither(t.array(type).decode(transformer(result.rows)))
-        .mapLeft((err): Error | Errors => err)
+    .mapLeft<QueryFailure<T>>(mapToErrorFailure)
+    .chain(result => {
+      const transformedRows = transformer(result.rows);
+
+      return fromEither(t.array(type).decode(transformedRows))
+        .mapLeft<QueryFailure<T>>(mapToValidationFailure(type, transformedRows))
         .chain(a =>
           fromArray(a).foldL(
             () =>
-              left<Error | Errors, NonEmptyArray<t.TypeOf<T>>>(
-                task.of(new ResponseNumberError(expectedAtLeastOneRow)),
+              left<QueryFailure<T>, NonEmptyArray<t.TypeOf<T>>>(
+                task.of(mapToErrorFailure(new ResponseNumberError(expectedAtLeastOneRow))),
               ),
-            array => right<Error | Errors, NonEmptyArray<t.TypeOf<T>>>(task.of(array)),
+            array => right<QueryFailure<T>, NonEmptyArray<t.TypeOf<T>>>(task.of(array)),
           ),
-        ),
-    );
+        );
+    });
 
 export const queryOneOrNone = (transformer: Transformer = identity) => <T extends t.Type<any>>(
   type: T,
   query: QueryConfig,
-) => (queryConnection: QueryConnection): TaskEither<Error | Errors, Option<t.TypeOf<T>>> =>
+) => (queryConnection: QueryConnection): TaskEither<QueryFailure<T>, Option<t.TypeOf<T>>> =>
   executeQuery(query, queryConnection)
-    .mapLeft((err): Error | Errors => err)
+    .mapLeft<QueryFailure<T>>(mapToErrorFailure)
     .chain(result => {
       if (result.rows.length > 1) {
-        return left<Error | Errors, Option<t.TypeOf<T>>>(
-          task.of(new ResponseNumberError(expectedOneOrNone)),
+        return left<QueryFailure<T>, Option<t.TypeOf<T>>>(
+          task.of(mapToErrorFailure(new ResponseNumberError(expectedOneOrNone))),
         );
       }
 
       if (result.rows.length === 0) {
-        return right<Error | Errors, Option<t.TypeOf<T>>>(task.of(none));
+        return right<QueryFailure<T>, Option<t.TypeOf<T>>>(task.of(none));
       }
 
-      return fromEither(type.decode(transformer(result.rows)[0])).map(some);
+      const transformedRow = transformer(result.rows)[0];
+
+      return fromEither(type.decode(transformedRow))
+        .mapLeft<QueryFailure<T>>(mapToValidationFailure(type, transformedRow))
+        .map(some);
     });

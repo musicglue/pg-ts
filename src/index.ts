@@ -9,3 +9,4 @@ export {
   queryOneOrNone,
   QueryConnection,
 } from "./query";
+export { ErrorFailure, QueryFailure, ValidationFailure } from "./queryFailure";
