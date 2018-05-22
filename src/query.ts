@@ -74,17 +74,14 @@ const expectedOneFoundNoneErrorFailure = mapToErrorFailure(
 );
 const expectedOneOrNoneErrorFailure = mapToErrorFailure(new ResponseNumberError(expectedOneOrNone));
 
-export const queryAny = (transformer: Transformer = identity) => <
-  A,
-  T extends t.Type<A, any, mixed>
->(
-  type: T,
+export const queryAny = (transformer: Transformer = identity) => <A>(
+  type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
-): PgReaderTaskEither<QueryFailure<T>, A[]> =>
+): PgReaderTaskEither<QueryFailure<typeof type>, A[]> =>
   askConnection()
     .map(executeQuery(query).value)
     .chain(fromTaskEither)
-    .mapLeft<QueryFailure<T>>(mapToErrorFailure)
+    .mapLeft<QueryFailure<typeof type>>(mapToErrorFailure)
     .map(({ rows }) => transformer(rows))
     .map(rows =>
       t
@@ -103,17 +100,14 @@ export const queryNone = (query: QueryConfig): PgReaderTaskEither<ErrorFailure, 
     .chain(fromEither)
     .map(constVoid);
 
-export const queryOne = (transformer: Transformer = identity) => <
-  A,
-  T extends t.Type<A, any, mixed>
->(
-  type: T,
+export const queryOne = (transformer: Transformer = identity) => <A>(
+  type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
-): PgReaderTaskEither<QueryFailure<T>, A> =>
+): PgReaderTaskEither<QueryFailure<typeof type>, A> =>
   askConnection()
     .map(executeQuery(query).value)
     .chain(fromTaskEither)
-    .mapLeft<QueryFailure<T>>(mapToErrorFailure)
+    .mapLeft<QueryFailure<typeof type>>(mapToErrorFailure)
     .map(
       fromPredicate(isOneResult, result =>
         fromPredicate(isNoneResult, identity)(result).fold(
@@ -128,17 +122,14 @@ export const queryOne = (transformer: Transformer = identity) => <
     .map(x => x)
     .chain(fromEither);
 
-export const queryOneOrMore = (transformer: Transformer = identity) => <
-  A,
-  T extends t.Type<A, any, mixed>
->(
-  type: T,
+export const queryOneOrMore = (transformer: Transformer = identity) => <A>(
+  type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
-): PgReaderTaskEither<QueryFailure<T>, NonEmptyArray<A>> =>
+): PgReaderTaskEither<QueryFailure<typeof type>, NonEmptyArray<A>> =>
   askConnection()
     .map(executeQuery(query).value)
     .chain(fromTaskEither)
-    .mapLeft<QueryFailure<T>>(mapToErrorFailure)
+    .mapLeft<QueryFailure<typeof type>>(mapToErrorFailure)
     .map(fromPredicate(isNonEmptyResult, constant(expectedAtLeastOneErrorFailure)))
     .chain(fromEither)
     .map(({ rows }) => transformer(rows))
@@ -151,17 +142,14 @@ export const queryOneOrMore = (transformer: Transformer = identity) => <
     .chain(fromEither)
     .map(rows => new NonEmptyArray(rows[0], rows.slice(1)));
 
-export const queryOneOrNone = (transformer: Transformer = identity) => <
-  A,
-  T extends t.Type<A, any, t.mixed>
->(
-  type: T,
+export const queryOneOrNone = (transformer: Transformer = identity) => <A>(
+  type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
-): PgReaderTaskEither<QueryFailure<T>, Option<A>> =>
+): PgReaderTaskEither<QueryFailure<typeof type>, Option<A>> =>
   askConnection()
     .map(executeQuery(query).value)
     .chain(fromTaskEither)
-    .mapLeft<QueryFailure<T>>(mapToErrorFailure)
+    .mapLeft<QueryFailure<typeof type>>(mapToErrorFailure)
     .map(fromPredicate(isOneOrNoneResult, constant(expectedOneOrNoneErrorFailure)))
     .chain(fromEither)
     .map(({ rows }) => transformer(rows))
