@@ -6,7 +6,7 @@ import { fromEither as optionFromEither, Option } from "fp-ts/lib/Option";
 import * as t from "io-ts";
 import { mixed } from "io-ts";
 import { QueryConfig } from "pg";
-import { Connection } from "./connection";
+import { PgConnection } from "./connection";
 import { executeQuery as driverExecuteQuery, PgQueryResult } from "./driver";
 import {
   ErrorFailure,
@@ -14,16 +14,24 @@ import {
   mapToValidationFailure,
   QueryFailure,
 } from "./queryFailure";
-import { ask, fromEither, fromTaskEither, ReaderTaskEither } from "./utils/readerTaskEither";
+import {
+  ask,
+  fromEither,
+  fromTaskEither,
+  ReaderTaskEither,
+  readerTaskEither,
+} from "./utils/readerTaskEither";
 
 export interface DbResponse {
   rows: mixed[];
 }
 
-export type PgReaderTaskEither<L, R> = ReaderTaskEither<Connection, L, R>;
+export type PgReaderTaskEither<L, R> = ReaderTaskEither<PgConnection, L, R>;
 export type Transformer = (x: mixed[]) => mixed[];
 
-export const askConnection = <L = Error>() => ask<Connection, L>();
+export const askConnection = <L = Error>() => ask<PgConnection, L>();
+export const pgReaderTaskEitherOf = <A, L = Error>(a: A) =>
+  readerTaskEither.of<PgConnection, L, A>(a);
 
 const executeQuery = (query: QueryConfig): PgReaderTaskEither<Error, PgQueryResult> =>
   askConnection<Error>()

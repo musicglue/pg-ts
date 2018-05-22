@@ -5,18 +5,18 @@ import { PgClient } from "./driver";
 import { ParserSetup, setupParsers, TypeParsers } from "./parser";
 import { memoise } from "./utils/memoise";
 
-export interface Connection {
+export interface PgConnection {
   connectionPool: Pool;
   parserSetup: ParserSetup;
   pg: PgClient;
 }
 
-export interface ConnectionPoolConfig extends PoolConfig {
+export interface PgConnectionPoolConfig extends PoolConfig {
   onError: (err: Error) => void;
   parsers?: TypeParsers;
 }
 
-export const makeConnection = (poolConfig: ConnectionPoolConfig): Connection => {
+export const makePgConnection = (poolConfig: PgConnectionPoolConfig): PgConnection => {
   const pool = new Pool(poolConfig);
 
   pool.on("error", poolConfig.onError);

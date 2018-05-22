@@ -1,6 +1,6 @@
 import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
 import { Pool } from "pg";
-import { Connection } from "./connection";
+import { PgConnection } from "./connection";
 import { mapCatchToError } from "./errors";
 import { eitherToPromise } from "./utils/eitherToPromise";
 
@@ -22,15 +22,15 @@ export interface TxOptions {
   readonly readOnly: boolean;
 }
 
-export type TransactionScope<T> = (tx: Connection) => TaskEither<Error, T>;
+export type TransactionScope<T> = (tx: PgConnection) => TaskEither<Error, T>;
 
-const applyTransactionToClient = <T>(connection: Connection, scope: TransactionScope<T>) =>
+const applyTransactionToClient = <T>(connection: PgConnection, scope: TransactionScope<T>) =>
   scope(connection)
     .run()
     .then(eitherToPromise);
 
 const applyTransactionToPool = <T>(
-  connection: Connection,
+  connection: PgConnection,
   pool: Pool,
   scope: TransactionScope<T>,
   opts: TxOptions,
@@ -72,14 +72,14 @@ const applyTransactionToPool = <T>(
 export function beginTransaction<T>(
   x: TxOptions,
   y: TransactionScope<T>,
-): (connection: Connection) => TaskEither<Error, T>;
+): (connection: PgConnection) => TaskEither<Error, T>;
 export function beginTransaction<T>(
   x: TransactionScope<T>,
-): (connection: Connection) => TaskEither<Error, T>;
+): (connection: PgConnection) => TaskEither<Error, T>;
 export function beginTransaction<T>(
   x: any,
   y?: any,
-): (connection: Connection) => TaskEither<Error, T> {
+): (connection: PgConnection) => TaskEither<Error, T> {
   const opts: TxOptions = typeof x === "function" ? defaultTxOptions : x;
   const transactionScope: TransactionScope<T> = typeof x === "function" ? x : y;
 
