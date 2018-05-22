@@ -8,15 +8,11 @@ export interface PgType {
   typname: string;
 }
 
-export interface QueryResult {
+export interface PgQueryResult {
   rows: PgType[];
 }
 
-export type Connection = Client | Pool | PoolClient;
+export type PgClient = Client | Pool | PoolClient;
 
-export const executeQuery = (
-  connection: Connection,
-  query: QueryConfig,
-): TaskEither<Error, QueryResult> => {
-  return tryCatch(() => connection.query(query), mapCatchToError);
-};
+export const executeQuery = (pg: PgClient, query: QueryConfig): TaskEither<Error, PgQueryResult> =>
+  tryCatch(() => pg.query(query), mapCatchToError);

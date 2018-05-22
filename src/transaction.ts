@@ -1,18 +1,14 @@
-import { Either } from "fp-ts/lib/Either";
 import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
 import { Pool } from "pg";
+import { Connection } from "./connection";
 import { mapCatchToError } from "./errors";
-import { ParserSetup } from "./parser";
-import { QueryConnection } from "./query";
+import { eitherToPromise } from "./utils/eitherToPromise";
 
-const defaultTxOptions: TxOptions = {
+export const defaultTxOptions: TxOptions = {
   deferrable: false,
   isolation: "READ COMMITTED",
   readOnly: false,
 };
-
-const eitherToPromise = <L, R>(either: Either<L, R>) =>
-  either.fold(l => Promise.reject(l), r => Promise.resolve(r));
 
 export type TxIsolationLevel =
   | "READ UNCOMMITTED"
@@ -26,59 +22,78 @@ export interface TxOptions {
   readonly readOnly: boolean;
 }
 
-export type TransactionScope<T> = (tx: QueryConnection) => TaskEither<Error, T>;
+export type TransactionScope<T> = (tx: Connection) => TaskEither<Error, T>;
 
-export interface BeginTransaction {
-  <T>(x: TxOptions, y: TransactionScope<T>): TaskEither<Error, T>;
-  <T>(x: TransactionScope<T>): TaskEither<Error, T>;
-}
+const applyTransactionToClient = <T>(connection: Connection, scope: TransactionScope<T>) =>
+  scope(connection)
+    .run()
+    .then(eitherToPromise);
 
-export const makeTransactionFactory = (pool: Pool, parserSetup: ParserSetup): BeginTransaction => {
-  return t;
+const applyTransactionToPool = <T>(
+  connection: Connection,
+  pool: Pool,
+  scope: TransactionScope<T>,
+  opts: TxOptions,
+) => {
+  const opening = ["BEGIN TRANSACTION", `ISOLATION LEVEL ${opts.isolation}`];
 
-  function t<T>(x: TxOptions, y: TransactionScope<T>): TaskEither<Error, T>;
-  function t<T>(x: TransactionScope<T>): TaskEither<Error, T>;
-  function t<T>(x: any, y?: any): TaskEither<Error, T> {
-    const opts: TxOptions = typeof x === "function" ? defaultTxOptions : x;
-    const transactionScope: TransactionScope<T> = typeof x === "function" ? x : y;
+  if (opts.readOnly) {
+    opening.push("READ ONLY");
+  }
+  if (opts.deferrable) {
+    opening.push("DEFERRABLE");
+  }
 
-    return parserSetup.chain(() =>
+  return pool.connect().then(client =>
+    Promise.resolve(opening.join(" "))
+      .then(openings => client.query(openings))
+      .then(() =>
+        scope(connection)
+          .run()
+          .then(eitherToPromise),
+      )
+      .then(results => {
+        const commit = client.query("COMMIT;");
+
+        commit.then(() => client.release());
+
+        return commit.then(() => results);
+      })
+      .catch(err => {
+        const rollback = client.query("ROLLBACK;");
+
+        rollback.then(() => client.release());
+
+        return Promise.reject(err);
+      }),
+  );
+};
+
+export function beginTransaction<T>(
+  x: TxOptions,
+  y: TransactionScope<T>,
+): (connection: Connection) => TaskEither<Error, T>;
+export function beginTransaction<T>(
+  x: TransactionScope<T>,
+): (connection: Connection) => TaskEither<Error, T>;
+export function beginTransaction<T>(
+  x: any,
+  y?: any,
+): (connection: Connection) => TaskEither<Error, T> {
+  const opts: TxOptions = typeof x === "function" ? defaultTxOptions : x;
+  const transactionScope: TransactionScope<T> = typeof x === "function" ? x : y;
+
+  return connection => {
+    const { pg } = connection;
+
+    return connection.parserSetup.chain(() =>
       tryCatch(
         () =>
-          pool.connect().then(client => {
-            const opening = ["BEGIN TRANSACTION", `ISOLATION LEVEL ${opts.isolation}`];
-
-            if (opts.readOnly) {
-              opening.push("READ ONLY");
-            }
-            if (opts.deferrable) {
-              opening.push("DEFERRABLE");
-            }
-
-            return Promise.resolve(opening.join(" "))
-              .then(openings => client.query(openings))
-              .then(() =>
-                transactionScope({ connection: client, parserSetup })
-                  .run()
-                  .then(eitherToPromise),
-              )
-              .then(results => {
-                const commit = client.query("COMMIT;");
-
-                commit.then(() => client.release());
-
-                return commit.then(() => results);
-              })
-              .catch(err => {
-                const rollback = client.query("ROLLBACK;");
-
-                rollback.then(() => client.release());
-
-                return Promise.reject(err);
-              });
-          }),
+          pg instanceof Pool
+            ? applyTransactionToPool(connection, pg, transactionScope, opts)
+            : applyTransactionToClient(connection, transactionScope),
         mapCatchToError,
       ),
     );
-  }
-};
+  };
+}
