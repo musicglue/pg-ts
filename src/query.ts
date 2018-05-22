@@ -67,9 +67,8 @@ const expectedOneFoundNoneErrorFailure = mapToErrorFailure(
 const expectedOneOrNoneErrorFailure = mapToErrorFailure(new ResponseNumberError(expectedOneOrNone));
 
 export const queryAny = (transformer: Transformer = identity) => <
-  T extends t.Type<A, O, t.mixed>,
   A,
-  O = A
+  T extends t.Type<A, any, mixed>
 >(
   type: T,
   query: QueryConfig,
@@ -97,9 +96,8 @@ export const queryNone = (query: QueryConfig): PgReaderTaskEither<ErrorFailure, 
     .map(constVoid);
 
 export const queryOne = (transformer: Transformer = identity) => <
-  T extends t.Type<A, O, t.mixed>,
   A,
-  O = A
+  T extends t.Type<A, any, mixed>
 >(
   type: T,
   query: QueryConfig,
@@ -123,9 +121,8 @@ export const queryOne = (transformer: Transformer = identity) => <
     .chain(fromEither);
 
 export const queryOneOrMore = (transformer: Transformer = identity) => <
-  T extends t.Type<A, O, t.mixed>,
   A,
-  O = A
+  T extends t.Type<A, any, mixed>
 >(
   type: T,
   query: QueryConfig,
@@ -147,9 +144,8 @@ export const queryOneOrMore = (transformer: Transformer = identity) => <
     .map(rows => new NonEmptyArray(rows[0], rows.slice(1)));
 
 export const queryOneOrNone = (transformer: Transformer = identity) => <
-  T extends t.Type<A, O, t.mixed>,
   A,
-  O = A
+  T extends t.Type<A, any, t.mixed>
 >(
   type: T,
   query: QueryConfig,
