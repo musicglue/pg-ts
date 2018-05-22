@@ -6,7 +6,6 @@ import { Pool, PoolConfig } from "pg";
 import { PgClient } from "./driver";
 import { ParserSetup, setupParsers, TypeParsers } from "./parser";
 import { memoise } from "./utils/memoise";
-import { ask, ReaderTaskEither, readerTaskEither } from "./utils/readerTaskEither";
 
 export interface PgConnection {
   connectionPool: Pool;
@@ -37,10 +36,3 @@ export const makePgConnection = (poolConfig: PgConnectionPoolConfig): PgConnecti
     pg: pool,
   };
 };
-
-export type PgReaderTaskEither<L, R> = ReaderTaskEither<PgConnection, L, R>;
-
-export const askConnection = <L = Error>() => ask<PgConnection, L>();
-
-export const pgReaderTaskEitherOf = <A, L = Error>(a: A) =>
-  readerTaskEither.of<PgConnection, L, A>(a);

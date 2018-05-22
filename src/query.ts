@@ -5,8 +5,9 @@ import { NonEmptyArray } from "fp-ts/lib/NonEmptyArray";
 import { fromEither as optionFromEither, Option } from "fp-ts/lib/Option";
 import * as t from "io-ts";
 import { QueryConfig } from "pg";
-import { askConnection, PgConnection, PgReaderTaskEither } from "./connection";
+import { PgConnection } from "./connection";
 import { executeQuery as driverExecuteQuery, PgQueryResult } from "./driver";
+import { askConnection, PgReaderTaskEither } from "./pgReaderTaskEither";
 import {
   ErrorFailure,
   mapToErrorFailure,
