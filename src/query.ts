@@ -4,9 +4,8 @@ import { constant, identity, or, Predicate } from "fp-ts/lib/function";
 import { NonEmptyArray } from "fp-ts/lib/NonEmptyArray";
 import { fromEither as optionFromEither, Option } from "fp-ts/lib/Option";
 import * as t from "io-ts";
-import { mixed } from "io-ts";
 import { QueryConfig } from "pg";
-import { PgConnection } from "./connection";
+import { askConnection, PgConnection, PgReaderTaskEither } from "./connection";
 import { executeQuery as driverExecuteQuery, PgQueryResult } from "./driver";
 import {
   ErrorFailure,
@@ -14,24 +13,13 @@ import {
   mapToValidationFailure,
   QueryFailure,
 } from "./queryFailure";
-import {
-  ask,
-  fromEither,
-  fromTaskEither,
-  ReaderTaskEither,
-  readerTaskEither,
-} from "./utils/readerTaskEither";
+import { fromEither, fromTaskEither, ReaderTaskEither } from "./utils/readerTaskEither";
 
 export interface DbResponse {
-  rows: mixed[];
+  rows: t.mixed[];
 }
 
-export type PgReaderTaskEither<L, R> = ReaderTaskEither<PgConnection, L, R>;
-export type Transformer = (x: mixed[]) => mixed[];
-
-export const askConnection = <L = Error>() => ask<PgConnection, L>();
-export const pgReaderTaskEitherOf = <A, L = Error>(a: A) =>
-  readerTaskEither.of<PgConnection, L, A>(a);
+export type Transformer = (x: t.mixed[]) => t.mixed[];
 
 const executeQuery = (query: QueryConfig): PgReaderTaskEither<Error, PgQueryResult> =>
   askConnection<Error>()
@@ -52,8 +40,6 @@ const expectedOneManyFound = "Query returned many rows but one row was expected"
 const expectedOneNoneFound = "Query returned no rows but one row was expected";
 const expectedOneOrNone = "Query returned more than one row but one or none were expected";
 const expectedAtLeastOneRow = "Query returned no rows but rows were expected";
-
-const constVoid = () => (undefined as any) as void;
 
 const isNoneResult: Predicate<PgQueryResult> = ({ rows }) => rows.length === 0;
 const isNonEmptyResult: Predicate<PgQueryResult> = ({ rows }) => rows.length > 0;
@@ -98,7 +84,7 @@ export const queryNone = (query: QueryConfig): PgReaderTaskEither<ErrorFailure, 
     .mapLeft(mapToErrorFailure)
     .map(fromPredicate(isNoneResult, constant(expectedNoneFoundSomeErrorFailure)))
     .chain(fromEither)
-    .map(constVoid);
+    .map<void>(() => undefined as any);
 
 export const queryOne = (transformer: Transformer = identity) => <A>(
   type: t.Type<A, any, t.mixed>,

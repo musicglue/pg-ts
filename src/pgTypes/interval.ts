@@ -1,15 +1,18 @@
-type PGIntervalField = "seconds" | "minutes" | "hours" | "days" | "months" | "years";
+import { fromNullable, none, Option } from "fp-ts/lib/Option";
 
-interface PGIntervalObject<T> {
-  [key: string]: T;
-  milliseconds?: T;
-  seconds?: T;
-  minutes?: T;
-  hours?: T;
-  days?: T;
-  months?: T;
-  years?: T;
+interface PGNamedIntervalObject<T> {
+  milliseconds: T | undefined;
+  seconds: T | undefined;
+  minutes: T | undefined;
+  hours: T | undefined;
+  days: T | undefined;
+  months: T | undefined;
+  years: T | undefined;
 }
+
+type PGIntervalField = keyof PGNamedIntervalObject<any>;
+
+interface PGIntervalObject<T> extends Record<string, T | undefined>, PGNamedIntervalObject<T> {}
 
 const NEGATION_INDEX = 8;
 const NEGATION_INDICATOR = "-";
@@ -26,6 +29,7 @@ const INTERVAL = new RegExp(
 const propMapToISO: PGIntervalObject<string> = {
   days: "D",
   hours: "H",
+  milliseconds: undefined,
   minutes: "M",
   months: "M",
   seconds: "S",
@@ -42,48 +46,62 @@ const positionLookup: PGIntervalObject<number> = {
   years: 2,
 };
 
-const dateProps: PGIntervalField[] = ["years", "months", "days"];
-const timeProps: PGIntervalField[] = ["hours", "minutes", "seconds"];
+const dateProps: string[] = ["years", "months", "days"];
+const timeProps: string[] = ["hours", "minutes", "seconds"];
 
 // pad sub-seconds up to microseconds before parsing
 const parseSubseconds = (fraction: string): number =>
   parseInt(`${fraction}${"000000".slice(fraction.length)}`, 10);
 
-const parse = (raw: string): PGIntervalObject<number> => {
+const parse = (raw: string): PGIntervalObject<number> | null => {
   if (!raw) {
     return null;
   }
 
   const matches = INTERVAL.exec(raw);
+
+  if (!matches) {
+    return null;
+  }
+
   const isNegative = matches[NEGATION_INDEX] === NEGATION_INDICATOR;
 
-  return Object.keys(positionLookup).reduce((acc, prop: PGIntervalField) => {
-    const position = positionLookup[prop];
-    const value = matches[position];
-    if (!value) {
-      return acc;
-    }
+  return Object.keys(positionLookup).reduce(
+    (acc, prop: string) => {
+      const position = positionLookup[prop];
 
-    const parsed = String(prop) === "milliseconds" ? parseSubseconds(value) : parseInt(value, 10);
+      if (!position) {
+        return acc;
+      }
 
-    if (!parsed) {
-      return acc;
-    }
+      const value = matches[position];
 
-    return {
-      ...acc,
-      [prop]: isNegative && timeProps.includes(prop) ? parsed * -1 : parsed,
-    };
-  }, {});
+      if (!value) {
+        return acc;
+      }
+
+      const parsed = String(prop) === "milliseconds" ? parseSubseconds(value) : parseInt(value, 10);
+
+      if (!parsed) {
+        return acc;
+      }
+
+      return {
+        ...acc,
+        [prop]: isNegative && timeProps.includes(prop) ? parsed * -1 : parsed,
+      };
+    },
+    {} as PGIntervalObject<number>,
+  );
 };
 
 const formatMilliseconds = (raw: number): string => String(raw * 1000).replace(/[0]+$/g, "");
 
-const buildProperty = (parsed: PGIntervalObject<number>) => (prop: PGIntervalField): string => {
-  const value = parsed[prop] || 0;
+const buildProperty = (parsed: PGIntervalObject<number> | null) => (prop: string): string => {
+  const value = parsed == null ? 0 : parsed[prop] || 0;
   const isoEquiv = propMapToISO[prop];
 
-  if (prop === "seconds" && parsed.milliseconds) {
+  if (prop === "seconds" && parsed && parsed.milliseconds) {
     return `${value}.${formatMilliseconds(parsed.milliseconds)}${isoEquiv}`;
   }
 
