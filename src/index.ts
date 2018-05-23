@@ -17,3 +17,4 @@ export {
   TxIsolationLevel,
   TxOptions,
 } from "./transaction";
+export * from "./utils/readerTaskEither";

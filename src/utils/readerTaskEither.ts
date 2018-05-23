@@ -1,7 +1,9 @@
 // tslint:disable:no-class no-this
 
-import { Either } from "fp-ts/lib/Either";
-import { constant, constIdentity } from "fp-ts/lib/function";
+import { Alt3 } from "fp-ts/lib/Alt";
+import { Bifunctor3 } from "fp-ts/lib/Bifunctor";
+import { Either, fromPredicate as eitherFromPredicate } from "fp-ts/lib/Either";
+import { constant, constIdentity, Predicate } from "fp-ts/lib/function";
 import { IO } from "fp-ts/lib/IO";
 import { Monad3 } from "fp-ts/lib/Monad";
 import { Reader } from "fp-ts/lib/Reader";
@@ -46,12 +48,6 @@ export class ReaderTaskEither<E, L, A> {
   /**
    * @since 1.6.0
    */
-  public mapLeft<M>(f: (l: L) => M): ReaderTaskEither<E, M, A> {
-    return new ReaderTaskEither<E, M, A>(e => this.value(e).mapLeft(f));
-  }
-  /**
-   * @since 1.6.0
-   */
   public ap<B>(fab: ReaderTaskEither<E, L, (a: A) => B>): ReaderTaskEither<E, L, B> {
     return new ReaderTaskEither(readerTTaskEither.ap(fab.value, this.value));
   }
@@ -84,6 +80,38 @@ export class ReaderTaskEither<E, L, A> {
   public chain<B>(f: (a: A) => ReaderTaskEither<E, L, B>): ReaderTaskEither<E, L, B> {
     return new ReaderTaskEither(readerTTaskEither.chain(a => f(a).value, this.value));
   }
+  /**
+   * @since 1.6.0
+   */
+  // tslint:disable-next-line:no-shadowed-variable
+  public fold<R>(left: (l: L) => R, right: (a: A) => R): Reader<E, Task<R>> {
+    return new Reader(e => this.value(e).fold(left, right));
+  }
+  /**
+   * @since 1.6.0
+   */
+  public mapLeft<M>(f: (l: L) => M): ReaderTaskEither<E, M, A> {
+    return new ReaderTaskEither(e => this.value(e).mapLeft(f));
+  }
+  /**
+   * Transforms the failure value of the `ReaderTaskEither` into a new `ReaderTaskEither`
+   * @since 1.6.0
+   */
+  public orElse<M>(f: (l: L) => ReaderTaskEither<E, M, A>): ReaderTaskEither<E, M, A> {
+    return new ReaderTaskEither(e => this.value(e).orElse(l => f(l).value(e)));
+  }
+  /**
+   * @since 1.6.0
+   */
+  public alt(fy: ReaderTaskEither<E, L, A>): ReaderTaskEither<E, L, A> {
+    return this.orElse(() => fy);
+  }
+  /**
+   * @since 1.6.0
+   */
+  public bimap<V, B>(f: (l: L) => V, g: (a: A) => B): ReaderTaskEither<E, V, B> {
+    return new ReaderTaskEither(e => this.value(e).bimap(f, g));
+  }
 }
 
 const map = <E, L, A, B>(
@@ -109,6 +137,21 @@ const chain = <E, L, A, B>(
   f: (a: A) => ReaderTaskEither<E, L, B>,
 ): ReaderTaskEither<E, L, B> => {
   return fa.chain(f);
+};
+
+const alt = <E, L, A>(
+  fx: ReaderTaskEither<E, L, A>,
+  fy: ReaderTaskEither<E, L, A>,
+): ReaderTaskEither<E, L, A> => {
+  return fx.alt(fy);
+};
+
+const bimap = <E, L, V, A, B>(
+  fa: ReaderTaskEither<E, L, A>,
+  f: (l: L) => V,
+  g: (a: A) => B,
+): ReaderTaskEither<E, V, B> => {
+  return fa.bimap(f, g);
 };
 
 const readerTask = readerT.ask(taskEither.taskEither);
@@ -200,6 +243,16 @@ export const fromLeft = <E, L, A>(l: L): ReaderTaskEither<E, L, A> => {
  * @function
  * @since 1.6.0
  */
+export const fromPredicate = <E, L, A>(predicate: Predicate<A>, whenFalse: (a: A) => L) => (
+  a: A,
+): ReaderTaskEither<E, L, A> => {
+  return fromTaskEither(taskEither.fromEither(eitherFromPredicate(predicate, whenFalse)(a)));
+};
+
+/**
+ * @function
+ * @since 1.6.0
+ */
 export const tryCatch = <E, L, A>(
   f: (e: E) => Promise<A>,
   onrejected: (reason: {}) => L,
@@ -211,9 +264,11 @@ export const tryCatch = <E, L, A>(
  * @instance
  * @since 1.6.0
  */
-export const readerTaskEither: Monad3<URI> = {
+export const readerTaskEither: Monad3<URI> & Bifunctor3<URI> & Alt3<URI> = {
   URI,
+  alt,
   ap,
+  bimap,
   chain,
   map,
   of,
