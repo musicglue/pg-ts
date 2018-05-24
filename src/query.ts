@@ -3,18 +3,18 @@ import { fromPredicate } from "fp-ts/lib/Either";
 import { constant, identity, or, Predicate } from "fp-ts/lib/function";
 import { NonEmptyArray } from "fp-ts/lib/NonEmptyArray";
 import { fromEither as optionFromEither, Option } from "fp-ts/lib/Option";
+import { fromEither, fromTaskEither, ReaderTaskEither } from "fp-ts/lib/ReaderTaskEither";
 import * as t from "io-ts";
 import { QueryConfig } from "pg";
 import { PgConnection } from "./connection";
 import { executeQuery as driverExecuteQuery, PgQueryResult } from "./driver";
-import { askConnection, PgReaderTaskEither } from "./pgReaderTaskEither";
+import { askPgConnection, PgReaderTaskEither } from "./pgReaderTaskEither";
 import {
   ErrorFailure,
   mapToErrorFailure,
   mapToValidationFailure,
   QueryFailure,
 } from "./queryFailure";
-import { fromEither, fromTaskEither, ReaderTaskEither } from "./utils/readerTaskEither";
 
 export interface DbResponse {
   rows: t.mixed[];
@@ -23,7 +23,7 @@ export interface DbResponse {
 export type Transformer = (x: t.mixed[]) => t.mixed[];
 
 const executeQuery = (query: QueryConfig): PgReaderTaskEither<Error, PgQueryResult> =>
-  askConnection<Error>()
+  askPgConnection<Error>()
     .map(({ parserSetup, pg }) => parserSetup.chain(() => driverExecuteQuery(pg, query)))
     .chain(fromTaskEither);
 
@@ -65,7 +65,7 @@ export const queryAny = (transformer: Transformer = identity) => <A>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
 ): PgReaderTaskEither<QueryFailure<typeof type>, A[]> =>
-  askConnection()
+  askPgConnection()
     .map(executeQuery(query).value)
     .chain(fromTaskEither)
     .mapLeft<QueryFailure<typeof type>>(mapToErrorFailure)
@@ -79,7 +79,7 @@ export const queryAny = (transformer: Transformer = identity) => <A>(
     .chain(fromEither);
 
 export const queryNone = (query: QueryConfig): PgReaderTaskEither<ErrorFailure, void> =>
-  askConnection()
+  askPgConnection()
     .map(executeQuery(query).value)
     .chain(fromTaskEither)
     .mapLeft(mapToErrorFailure)
@@ -91,7 +91,7 @@ export const queryOne = (transformer: Transformer = identity) => <A>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
 ): PgReaderTaskEither<QueryFailure<typeof type>, A> =>
-  askConnection()
+  askPgConnection()
     .map(executeQuery(query).value)
     .chain(fromTaskEither)
     .mapLeft<QueryFailure<typeof type>>(mapToErrorFailure)
@@ -113,7 +113,7 @@ export const queryOneOrMore = (transformer: Transformer = identity) => <A>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
 ): PgReaderTaskEither<QueryFailure<typeof type>, NonEmptyArray<A>> =>
-  askConnection()
+  askPgConnection()
     .map(executeQuery(query).value)
     .chain(fromTaskEither)
     .mapLeft<QueryFailure<typeof type>>(mapToErrorFailure)
@@ -133,7 +133,7 @@ export const queryOneOrNone = (transformer: Transformer = identity) => <A>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
 ): PgReaderTaskEither<QueryFailure<typeof type>, Option<A>> =>
-  askConnection()
+  askPgConnection()
     .map(executeQuery(query).value)
     .chain(fromTaskEither)
     .mapLeft<QueryFailure<typeof type>>(mapToErrorFailure)

@@ -2,7 +2,7 @@ export { defaultCamelCaser, makeCamelCaser, CamelifyOptions } from "./utils/came
 export { SQL, SQLFragment } from "./utils/sql";
 export { PgConnection, PgConnectionPoolConfig, makePgConnection } from "./connection";
 export {
-  askConnection,
+  askPgConnection,
   pgReaderFromEither,
   pgReaderFromTaskEither,
   PgReaderTaskEither,
@@ -17,4 +17,3 @@ export {
   TxIsolationLevel,
   TxOptions,
 } from "./transaction";
-export * from "./utils/readerTaskEither";
