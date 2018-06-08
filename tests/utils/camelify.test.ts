@@ -63,11 +63,12 @@ describe("Utils", () => {
         const underscorePreservingCamelCase = (k: string) => {
           const matches = k.match(/^(_*)?(.*?)(_*)?$/);
           if (matches == null) {
-            return null;
+            return k;
           }
           const [, prefix = "", middle, suffix = ""] = matches;
           return `${prefix}${camelCase(middle)}${suffix}`;
         };
+
         const camelifyAll = makeCamelCaser({
           exclude: constant(false),
           keyMapper: underscorePreservingCamelCase,

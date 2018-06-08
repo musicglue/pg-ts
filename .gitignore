@@ -58,6 +58,7 @@ typings/
 .env
 
 # Project ignores
+build/
 dist/
 
 # Editor config

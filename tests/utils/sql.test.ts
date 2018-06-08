@@ -12,7 +12,7 @@ describe("Utils", () => {
 
       beforeEach(() => {
         let i = 0;
-        const seqGen = (value: any): string => {
+        const seqGen = (_: any): string => {
           i++;
           return `$${i}`;
         };
@@ -147,14 +147,14 @@ describe("Utils", () => {
           });
 
           it("matches populated arrays", () => {
-            value = {a: 10};
+            value = { a: 10 };
             res = SQL`${value} = ${value}`;
             expect(res).toHaveProperty("text", "$1 = $1");
             expect(res).toHaveProperty("values", [value]);
           });
 
           it("matches nested arrays", () => {
-            value = {a: {b: 10}};
+            value = { a: { b: 10 } };
             res = SQL`${value} = ${value}`;
             expect(res).toHaveProperty("text", "$1 = $1");
             expect(res).toHaveProperty("values", [value]);

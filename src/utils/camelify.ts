@@ -1,7 +1,8 @@
-import { constant, not, Predicate } from "fp-ts/lib/function";
+import { constTrue, not, Predicate } from "fp-ts/lib/function";
 import { fromNullable } from "fp-ts/lib/Option";
 import { mixed } from "io-ts";
 import { camelCase, fromPairs, isArray, isDate, isObject as _isObject, toPairs } from "lodash";
+import { RowTransformer } from "../types";
 
 export interface CamelifyOptions {
   exclude: Predicate<string>;
@@ -12,7 +13,7 @@ const isMappable: Predicate<mixed> = x =>
   fromNullable(x)
     .filter(isObject)
     .filter(not(isDate))
-    .fold(constant(false), constant(true));
+    .fold(false, constTrue);
 
 const defaultOptions: CamelifyOptions = {
   exclude: (k: string) => k.startsWith("_"),
@@ -50,4 +51,4 @@ export const makeCamelCaser = (options?: Partial<CamelifyOptions>) => {
   return (xs: mixed[]): mixed[] => xs.map(transformer);
 };
 
-export const defaultCamelCaser = makeCamelCaser();
+export const defaultCamelCaser: RowTransformer = makeCamelCaser();

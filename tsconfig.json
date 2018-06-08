@@ -5,13 +5,16 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
-    "noUnusedLocals": true,
+    "noUnusedLocals": false,
     "noUnusedParameters": true,
-    "outDir": "dist",
+    "outDir": "build",
+    "pretty": true,
     "sourceMap": true,
+    "strict": true,
     "target": "es2017"
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "tests/**/*.ts"
   ]
 }

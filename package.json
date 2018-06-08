@@ -8,20 +8,40 @@
   "author": "Music Glue",
   "license": "MIT",
   "scripts": {
-    "build": "rm -rf dist/  && tsc",
-    "format": "prettier --write --list-different --parser ${npm_package_prettier_parser} --trailing-comma ${npm_package_prettier_trailingComma} --print-width ${npm_package_prettier_printWidth} 'src/**/*.ts'",
+    "build": "npm run clean && npm run compile && mv ./build/src ./dist && rm -rf ./build",
+    "clean": "rm -rf ./{build,dist}",
+    "compile": "NODE_ENV=production tsc -p .",
+    "format": "npm run lint && npm run prettier && npm run lint",
+    "lint": "tslint -c tslint.json -p tsconfig.json --fix '{src,tests}/**/*.{ts,tsx}'",
+    "pretty": "prettier --write --list-different --parser ${npm_package_prettier_parser} --trailing-comma ${npm_package_prettier_trailingComma} --print-width ${npm_package_prettier_printWidth} '{src,tests}/**/*.ts'",
     "prepublishOnly": "npm run build",
-    "test": "NODE_ENV=test jest --runInBand"
+    "test": "NODE_ENV=test jest"
+  },
+  "dependencies": {
+    "fp-ts": "1.6.2",
+    "io-ts": "1.1.4",
+    "lodash": "4.17.10",
+    "monocle-ts": "1.0.0",
+    "pg": "7.4.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^23.0.0",
+    "@types/lodash": "^4.14.109",
+    "@types/pg": "^7.4.9",
+    "jest": "^23.1.0",
+    "prettier": "^1.13.4",
+    "ts-jest": "^22.4.6",
+    "ts-node": "^6.1.0",
+    "tslint": "^5.10.0",
+    "typescript": "^2.9.1"
   },
   "jest": {
     "collectCoverage": true,
     "coverageDirectory": "./coverage",
     "coveragePathIgnorePatterns": [
-      "<rootDir>/knexfile.ts",
-      "<rootDir>/src/db.ts",
       "<rootDir>/build/",
-      "<rootDir>/node_modules/",
-      "<rootDir>/__tests__/support/*.ts"
+      "<rootDir>/dist/",
+      "<rootDir>/node_modules/"
     ],
     "coverageThreshold": {
       "global": {
@@ -35,28 +55,10 @@
       "ts",
       "js"
     ],
-    "setupTestFrameworkScriptFile": "<rootDir>/__tests__/setup.ts",
     "transform": {
       "\\.(ts|tsx)$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
     },
-    "testRegex": "/__tests__/.*_test\\.(ts|tsx|js)$"
-  },
-  "dependencies": {
-    "fp-ts": "0.6.8",
-    "io-ts": "0.9.6",
-    "lodash": "^4.17.5",
-    "pg": "^7.4.1"
-  },
-  "devDependencies": {
-    "@types/jest": "^22.2.0",
-    "@types/lodash": "^4.14.105",
-    "@types/pg": "^7.4.5",
-    "jest": "^22.4.2",
-    "prettier": "^1.11.1",
-    "ts-jest": "^22.4.1",
-    "ts-node": "^5.0.1",
-    "tslint": "^5.9.1",
-    "typescript": "^2.7.2"
+    "testRegex": "/tests/.*\\.test\\.ts$"
   },
   "prettier": {
     "parser": "typescript",
