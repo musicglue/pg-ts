@@ -15,7 +15,7 @@ export class PgPoolCheckoutError extends Error {
 }
 
 export const catchAsPoolCheckoutError = (e: mixed) => new PgPoolCheckoutError(e);
-export const isPgPoolCheckoutErrr = (e: Error): e is PgPoolCheckoutError =>
+export const isPgPoolCheckoutError = (e: Error): e is PgPoolCheckoutError =>
   e instanceof PgPoolCheckoutError;
 
 export class PgPoolCreationError extends Error {

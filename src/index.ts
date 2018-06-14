@@ -1,6 +1,14 @@
 export { defaultCamelCaser, makeCamelCaser, CamelifyOptions } from "./utils/camelify";
 export { SQL, SQLFragment } from "./utils/sql";
 export {
+  isPgPoolCheckoutError,
+  isPgPoolCreationError,
+  isPgPoolShutdownError,
+  isPgQueryError,
+  isPgRowCountError,
+  isPgTransactionRollbackError,
+  isPgTypeParserSetupError,
+  isPgUnhandledTransactionError,
   PgPoolCheckoutError,
   PgPoolCreationError,
   PgQueryError,
