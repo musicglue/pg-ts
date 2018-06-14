@@ -11,6 +11,7 @@ import {
   fromIOEither,
   TaskEither,
   taskEither,
+  tryCatch,
   tryCatch as taskEitherTryCatch,
 } from "fp-ts/lib/TaskEither";
 import { Pool } from "pg";
@@ -20,10 +21,13 @@ import {
   catchAsPoolCheckoutError,
   catchAsPoolCreationError,
   catchAsPoolShutdownError,
+  ensureAsUnhandledConnectionUsageError,
+  ensureAsUnhandledTransactionError,
   isPgTransactionRollbackError,
 } from "./errors";
 import { setupParsers } from "./parser";
 import { ConnectionE, ConnectionPool, ConnectionPoolConfig } from "./types";
+import { eitherToPromise } from "./utils/eitherToPromise";
 
 export const makeConnectionPool = (
   poolConfig: ConnectionPoolConfig,
@@ -59,7 +63,10 @@ export const wrapConnectionPool = (pool: pg.Pool): ConnectionPool => ({
       readerTryCatch<E, Error, pg.PoolClient>(() => pool.connect(), catchAsPoolCheckoutError)
         .map(wrapPoolClient)
         .map(connection =>
-          withConnection.value({ connection, environment }).fold<Either<Error, A>>(
+          tryCatch(
+            () => withConnection.run({ connection, environment }).then(eitherToPromise),
+            ensureAsUnhandledConnectionUsageError,
+          ).fold<Either<Error, A>>(
             err => {
               connection.release(isPgTransactionRollbackError(err) ? err : undefined);
               return left(err);

@@ -97,6 +97,21 @@ export const catchAsTransactionRollbackError = (e: mixed) => new PgTransactionRo
 export const isPgTransactionRollbackError = (e: Error): e is PgTransactionRollbackError =>
   e instanceof PgTransactionRollbackError;
 
+export class PgUnhandledConnectionUsageError extends Error {
+  constructor(public readonly error: mixed) {
+    super("An unhandled error occurred while a connection was in use.");
+
+    Error.captureStackTrace(this, PgUnhandledConnectionUsageError);
+    this.name = this.constructor.name;
+  }
+}
+
+export const catchAsUnhandledConnectionUsageError = (e: mixed) =>
+  new PgUnhandledConnectionUsageError(e);
+export const ensureAsUnhandledConnectionUsageError = ensureError(
+  catchAsUnhandledConnectionUsageError,
+);
+
 export class PgUnhandledTransactionError extends Error {
   constructor(public readonly error: mixed) {
     super("An unhandled error occurred during a transaction.");
