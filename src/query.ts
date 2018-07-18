@@ -46,19 +46,6 @@ export type QueryOneError = QueryAnyError;
 export type QueryOneOrMoreError = QueryAnyError;
 export type QueryOneOrNoneError = QueryAnyError;
 
-// export const isQueryAnyError: ErrorPredicate<QueryAnyError> = (v): v is QueryAnyError =>
-//   isDriverQueryError(v) || isRowCountError(v) || isRowValidationError(v);
-// export const isQueryNoneError: ErrorPredicate<QueryNoneError> = (v): v is QueryNoneError =>
-//   isDriverQueryError(v) || isRowCountError(v);
-// export const isQueryOneError: ErrorPredicate<QueryOneError> = (v): v is QueryOneError =>
-//   isQueryAnyError(v);
-// export const isQueryOneOrMoreError: ErrorPredicate<QueryOneOrMoreError> = (
-//   v,
-// ): v is QueryOneOrMoreError => isQueryAnyError(v);
-// export const isQueryOneOrNoneError: ErrorPredicate<QueryOneOrNoneError> = (
-//   v,
-// ): v is QueryOneOrNoneError => isQueryAnyError(v);
-
 const queryAny = (transformer: RowTransformer = identity) => <A = any>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
