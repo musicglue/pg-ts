@@ -1,5 +1,6 @@
 export { defaultCamelCaser, makeCamelCaser, CamelifyOptions } from "./utils/camelify";
 export { SQL, SQLFragment } from "./utils/sql";
+export { widenToConnectionE } from "./connection";
 export {
   isPoolCheckoutError,
   isPoolCreationError,
@@ -23,6 +24,14 @@ export {
   PgUnhandledPoolError,
 } from "./errors";
 export { makeConnectionPool } from "./pool";
-export { camelCasedQueries, configurableQueries } from "./query";
-export { defaultTxOptions, withTransaction } from "./transaction";
+export {
+  camelCasedQueries,
+  configurableQueries,
+  QueryAnyError,
+  QueryNoneError,
+  QueryOneError,
+  QueryOneOrMoreError,
+  QueryOneOrNoneError,
+} from "./query";
+export { defaultTxOptions, withTransaction, withTransactionE } from "./transaction";
 export * from "./types";
