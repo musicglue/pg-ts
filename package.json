@@ -2,7 +2,7 @@
   "name": "pg-ts",
   "version": "4.0.1",
   "main": "dist/index.js",
-  "types": "dist/",
+  "types": "dist/index.d.ts",
   "module": "src/index.ts",
   "repository": "https://github.com/musicglue/pg-ts",
   "author": "Music Glue",
@@ -15,7 +15,7 @@
     "lint": "tslint -c tslint.json -p tsconfig.json --fix '{src,tests}/**/*.{ts,tsx}'",
     "pretty": "prettier --write --list-different --parser ${npm_package_prettier_parser} --trailing-comma ${npm_package_prettier_trailingComma} --print-width ${npm_package_prettier_printWidth} '{src,tests}/**/*.ts'",
     "prepublishOnly": "npm run build",
-    "test": "NODE_ENV=test jest"
+    "test": "NODE_ENV=test jest --runInBand"
   },
   "dependencies": {
     "fp-ts": "1.6.2",
@@ -29,6 +29,7 @@
     "@types/lodash": "^4.14.109",
     "@types/pg": "^7.4.9",
     "jest": "^23.1.0",
+    "pg-connection-string": "^2.0.0",
     "prettier": "^1.13.5",
     "ts-jest": "^22.4.6",
     "ts-node": "^6.1.1",
