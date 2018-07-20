@@ -26,10 +26,12 @@ import { getPoolConfig, truncate } from "./db";
 
 const { queryNone } = camelCasedQueries;
 
-export const queryTest = <L, A>(program: ReaderTaskEither<Connection, L, A>) =>
-  dbTest(widenToConnectionE(program));
+export const connectionTest = <L, A>(program: ReaderTaskEither<Connection, L, A>) =>
+  connectionETest(widenToConnectionE(program));
 
-export const dbTest = <L, A>(program: ReaderTaskEither<ConnectionE<{}>, L, A>): Promise<A> => {
+export const connectionETest = <L, A>(
+  program: ReaderTaskEither<ConnectionE<{}>, L, A>,
+): Promise<A> => {
   const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {

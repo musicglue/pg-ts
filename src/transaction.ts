@@ -86,6 +86,25 @@ const executeTransaction = <L, A>(
     )
     .chain(fromEither);
 
+export function withTransactionC<L, A>(
+  x: Partial<TransactionOptions>,
+  y: ReaderTaskEither<Connection, L, A>,
+): ReaderTaskEither<Connection, TransactionError<L>, A>;
+export function withTransactionC<L, A>(
+  x: ReaderTaskEither<Connection, L, A>,
+): ReaderTaskEither<Connection, TransactionError<L>, A>;
+export function withTransactionC<L, A>(
+  x: any,
+  y?: any,
+): ReaderTaskEither<Connection, TransactionError<L>, A> {
+  const opts: TransactionOptions = y ? { ...defaultTxOptions, ...x } : defaultTxOptions;
+  const program: ReaderTaskEither<Connection, L, A> = y || x;
+
+  return ask<Connection, TransactionError<L>>()
+    .map(connection => executeTransaction(connection, opts, () => program.run(connection)))
+    .chain(fromTaskEither);
+}
+
 export function withTransactionE<E, L, A>(
   x: Partial<TransactionOptions>,
   y: ReaderTaskEither<ConnectionE<E>, L, A>,
@@ -105,14 +124,14 @@ export function withTransactionE<E, L, A>(
     .chain(fromTaskEither);
 }
 
-export function withTransaction<E, L, A>(
+export function withTransactionEC<E, L, A>(
   x: Partial<TransactionOptions>,
   y: ReaderTaskEither<Connection, L, A>,
 ): ReaderTaskEither<ConnectionE<E>, TransactionError<L>, A>;
-export function withTransaction<E, L, A>(
+export function withTransactionEC<E, L, A>(
   x: ReaderTaskEither<Connection, L, A>,
 ): ReaderTaskEither<ConnectionE<E>, TransactionError<L>, A>;
-export function withTransaction<E, L, A>(
+export function withTransactionEC<E, L, A>(
   x: any,
   y?: any,
 ): ReaderTaskEither<ConnectionE<E>, TransactionError<L>, A> {

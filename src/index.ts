@@ -33,5 +33,10 @@ export {
   QueryOneOrMoreError,
   QueryOneOrNoneError,
 } from "./query";
-export { defaultTxOptions, withTransaction, withTransactionE } from "./transaction";
+export {
+  defaultTxOptions,
+  withTransactionC,
+  withTransactionE,
+  withTransactionEC,
+} from "./transaction";
 export * from "./types";

@@ -11,17 +11,17 @@ import {
   SQL,
 } from "../../src";
 import { fromTask } from "../../src/utils/taskEither";
-import { queryTest } from "./support/testTypes";
+import { connectionTest } from "./support/testTypes";
 import { Unit } from "./support/types";
 
 const { queryNone, queryOne, queryAny, queryOneOrMore, queryOneOrNone } = camelCasedQueries;
 
 describe("queries", () => {
   test("queryNone with a query that returns 0 rows returns void", () =>
-    queryTest(queryNone(SQL`SELECT * FROM units WHERE id = 999`)));
+    connectionTest(queryNone(SQL`SELECT * FROM units WHERE id = 999`)));
 
   test("queryNone with a query that returns > 0 rows returns PgRowCountError", () =>
-    queryTest(
+    connectionTest(
       ask<Connection, void>()
         .map(() => {
           const foo = queryNone(SQL`SELECT * FROM units`)
@@ -47,14 +47,14 @@ describe("queries", () => {
     ));
 
   test("queryOne with a query that returns 1 parseable row returns a single parsed type", () =>
-    queryTest(
+    connectionTest(
       queryOne(Unit, SQL`SELECT * FROM units WHERE id = 2`)
         .mapLeft(fail)
         .map(unit => expect(unit).toMatchObject({ id: 2, name: "Bike" })),
     ));
 
   test("queryOne with a query that returns 1 unparseable row returns a validation error", () =>
-    queryTest(
+    connectionTest(
       ask<Connection, void>()
         .map(() =>
           queryOne(Unit, SQL`SELECT 'foo' as id, 1 as name FROM units WHERE id = 2`)
@@ -75,7 +75,7 @@ describe("queries", () => {
     ));
 
   test("queryOne with a query that returns 0 rows returns PgRowCountError", () =>
-    queryTest(
+    connectionTest(
       ask<Connection, void>()
         .map(() =>
           queryOne(Unit, SQL`SELECT * FROM units WHERE id = 999`)
@@ -100,7 +100,7 @@ describe("queries", () => {
     ));
 
   test("queryOne with a query that returns > 1 rows returns PgRowCountError", () =>
-    queryTest(
+    connectionTest(
       ask<Connection, void>()
         .map(() =>
           queryOne(Unit, SQL`SELECT * FROM units`)
@@ -125,7 +125,7 @@ describe("queries", () => {
     ));
 
   test("queryOneOrMore with a query that returns 1 parseable row returns an array of a single parsed type", () =>
-    queryTest(
+    connectionTest(
       queryOneOrMore(Unit, SQL`SELECT * FROM units WHERE id = 2`)
         .mapLeft(fail)
         .map(units => {
@@ -135,7 +135,7 @@ describe("queries", () => {
     ));
 
   test("queryOneOrMore with a query that returns 2 parseable rows returns an array of two parsed types", () =>
-    queryTest(
+    connectionTest(
       queryOneOrMore(Unit, SQL`SELECT * FROM units WHERE name = 'Car' ORDER BY id`)
         .mapLeft(fail)
         .map(units => units.toArray())
@@ -147,7 +147,7 @@ describe("queries", () => {
     ));
 
   test("queryOneOrMore with a query that returns 0 rows returns PgRowCountError", () =>
-    queryTest(
+    connectionTest(
       ask<Connection, void>()
         .map(() =>
           queryOneOrMore(Unit, SQL`SELECT * FROM units WHERE id = 0`)
@@ -172,7 +172,7 @@ describe("queries", () => {
     ));
 
   test("queryOneOrNone with a query that returns 1 parseable row returns a Some of a single parsed type", () =>
-    queryTest(
+    connectionTest(
       queryOneOrNone(Unit, SQL`SELECT * FROM units WHERE id = 2`)
         .mapLeft(fail)
         .map(unitO => {
@@ -186,7 +186,7 @@ describe("queries", () => {
     ));
 
   test("queryOneOrNone with a query that returns 0 rows returns a None", () =>
-    queryTest(
+    connectionTest(
       queryOneOrNone(Unit, SQL`SELECT * FROM units WHERE id = 0`)
         .mapLeft(fail)
         .map(unitO => {
@@ -202,7 +202,7 @@ describe("queries", () => {
     ));
 
   test("queryOneOrNone with a query that returns 2 rows returns PgRowCountError", () =>
-    queryTest(
+    connectionTest(
       ask<Connection, void>()
         .map(() =>
           queryOneOrNone(Unit, SQL`SELECT * FROM units WHERE name = 'Car'`)
@@ -227,7 +227,7 @@ describe("queries", () => {
     ));
 
   test("queryAny with a query that returns 0 rows returns an empty array", () =>
-    queryTest(
+    connectionTest(
       camelCasedQueries
         .queryAny(Unit, SQL`SELECT * FROM units WHERE id = 0`)
         .mapLeft(fail)
@@ -237,7 +237,7 @@ describe("queries", () => {
     ));
 
   test("queryAny with a query that returns 1 rows returns an array of 1 parsed row", () =>
-    queryTest(
+    connectionTest(
       queryAny(Unit, SQL`SELECT * FROM units WHERE id = 1`)
         .mapLeft(fail)
         .map(units => {
@@ -247,7 +247,7 @@ describe("queries", () => {
     ));
 
   test("queryAny with a query that returns 2 rows returns an array of 2 parsed rows", () =>
-    queryTest(
+    connectionTest(
       queryAny(Unit, SQL`SELECT * FROM units WHERE name = 'Car' ORDER BY id`)
         .mapLeft(fail)
         .map(units => {

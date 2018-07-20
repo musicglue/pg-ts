@@ -20,28 +20,26 @@ import {
   PgRowCountError,
   SQL,
   TransactionError,
-  withTransaction,
 } from "../../src";
 import { widenToConnectionE } from "../../src/connection";
 import { QueryAnyError, QueryNoneError } from "../../src/query";
+import { withTransactionC } from "../../src/transaction";
 import { UnexpectedRightError } from "./support/errors";
-import { dbTest } from "./support/testTypes";
+import { connectionETest, connectionTest } from "./support/testTypes";
 import { Unit } from "./support/types";
 
 const { queryNone, queryAny } = camelCasedQueries;
 
 describe("transaction", () => {
   test("two rows inserted inside a committed transaction can be found", () =>
-    dbTest(
-      withTransaction(
+    connectionTest(
+      withTransactionC(
         queryNone(SQL`INSERT INTO units (id, name) VALUES (10, 'tx first')`).chain(() =>
           queryNone(SQL`INSERT INTO units (id, name) VALUES (11, 'tx second')`),
         ),
       )
         .mapLeft<TransactionError<QueryNoneError> | QueryAnyError>(identity)
-        .chain(() =>
-          widenToConnectionE(queryAny(Unit, SQL`SELECT * FROM units WHERE id >= 10 ORDER BY id`)),
-        )
+        .chain(() => queryAny(Unit, SQL`SELECT * FROM units WHERE id >= 10 ORDER BY id`))
         .map(units => {
           expect(units).toHaveLength(2);
           expect(units[0]).toMatchObject({ id: 10, name: "tx first" });
@@ -50,10 +48,10 @@ describe("transaction", () => {
     ));
 
   test("two rows inserted inside a rolled back transaction cannot be found", () =>
-    dbTest(
-      ask<ConnectionE<{}>, TransactionError<QueryNoneError> | UnexpectedRightError>()
+    connectionTest(
+      ask<Connection, TransactionError<QueryNoneError> | UnexpectedRightError>()
         .map(() =>
-          withTransaction(
+          withTransactionC(
             queryNone(SQL`INSERT INTO units (id, name) VALUES (10, 'tx first')`)
               .chain(() => queryNone(SQL`INSERT INTO units (id, name) VALUES (11, 'tx second')`))
               .chain(() => queryNone(SQL`SELECT * FROM units WHERE id = 10`)),
@@ -77,9 +75,7 @@ describe("transaction", () => {
         )
         .chain(fromReader)
         .chain(fromTaskEither)
-        .chain(() =>
-          widenToConnectionE(queryAny(Unit, SQL`SELECT * FROM units WHERE id >= 10 ORDER BY id`)),
-        )
+        .chain(() => queryAny(Unit, SQL`SELECT * FROM units WHERE id >= 10 ORDER BY id`))
         .map(units => {
           expect(units).toHaveLength(0);
         }),

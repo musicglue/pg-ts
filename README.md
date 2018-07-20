@@ -9,9 +9,15 @@ Typescript wrapper around node-postgres
 - Commonly-grouped errors are provided as unions, e.g. `ConnectionError<L>`, `TransactionError<L>`.
 - Renamed `withConnectionE` to `widenToConnectionE` for clarity and to differentiate from the
   `withConnectionE` function defined on `Connection`.
-- `withTransaction` now requires a `ReaderTaskEither<Connection, L, A>` instead of a
-  `ReaderTaskEither<ConnectionE<E>, L, A>`, and an equivalent `withTransactionE` is provided
-  that requires `ReaderTaskEither<ConnectionE<E>, L, A>`.
+- `withTransaction` has been replaced by three similar functions that assist you depending on
+   whether you want to go from:
+
+     | Outer Context    | Inner Context    | Function to use     |
+     |------------------|------------------|---------------------|
+     | `Connection`     | `Connection`     | `withTransactionC`  |
+     | `ConnectionE<E>` | `ConnectionE<E>` | `withTransactionE`  |
+     | `ConnectionE<E>` | `Connection`     | `withTransactionEC` |
+
 - Fixed the `types` setting in package.json, so imports should now default to `from "pg-ts"`
   instead of `from "pg-ts/dist"`.
 - Integration tests are provided. A `DATABASE_URL` environment variable must be present. The test
