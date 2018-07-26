@@ -1,7 +1,7 @@
 import { constant } from "fp-ts/lib/function";
 import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
 import * as pg from "pg";
-import { catchAsTypeParserSetupError, PgTypeParserSetupError } from "./errors";
+import { makeTypeParserSetupError, PgTypeParserSetupError } from "./errors";
 import { parseInterval } from "./pgTypes/interval";
 import { TypeParser, TypeParsers } from "./types";
 import { SQL } from "./utils/sql";
@@ -40,6 +40,6 @@ export const setupParsers = (pool: pg.Pool) => (parsers: TypeParsers) => {
             }
           });
         }),
-    catchAsTypeParserSetupError,
+    makeTypeParserSetupError,
   ).map(constant(pool));
 };

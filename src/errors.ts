@@ -1,12 +1,8 @@
-import { mixed } from "io-ts";
-import { isError } from "lodash";
+import * as t from "io-ts";
 import { QueryConfig } from "pg";
 
-export const ensureError = <E extends Error>(toError: (e: mixed) => E) => (caught: mixed): Error =>
-  isError(caught) ? caught : toError(caught);
-
 export class PgPoolCheckoutError extends Error {
-  constructor(public readonly error: mixed) {
+  constructor(public readonly error: t.mixed) {
     super("Unable to checkout a connection from the pool.");
 
     Error.captureStackTrace(this, PgPoolCheckoutError);
@@ -14,12 +10,12 @@ export class PgPoolCheckoutError extends Error {
   }
 }
 
-export const catchAsPoolCheckoutError = (e: mixed) => new PgPoolCheckoutError(e);
-export const isPgPoolCheckoutError = (e: Error): e is PgPoolCheckoutError =>
+export const makePoolCheckoutError = (e: t.mixed) => new PgPoolCheckoutError(e);
+export const isPoolCheckoutError = (e: t.mixed): e is PgPoolCheckoutError =>
   e instanceof PgPoolCheckoutError;
 
 export class PgPoolCreationError extends Error {
-  constructor(public readonly error: mixed) {
+  constructor(public readonly error: t.mixed) {
     super("Unable to create a connection pool.");
 
     Error.captureStackTrace(this, PgPoolCreationError);
@@ -27,12 +23,12 @@ export class PgPoolCreationError extends Error {
   }
 }
 
-export const catchAsPoolCreationError = (e: mixed) => new PgPoolCreationError(e);
-export const isPgPoolCreationError = (e: Error): e is PgPoolCreationError =>
+export const makePoolCreationError = (e: t.mixed) => new PgPoolCreationError(e);
+export const isPoolCreationError = (e: t.mixed): e is PgPoolCreationError =>
   e instanceof PgPoolCreationError;
 
 export class PgPoolShutdownError extends Error {
-  constructor(public readonly error: mixed) {
+  constructor(public readonly error: t.mixed) {
     super("Unable to shutdown a connection pool.");
 
     Error.captureStackTrace(this, PgPoolShutdownError);
@@ -40,21 +36,23 @@ export class PgPoolShutdownError extends Error {
   }
 }
 
-export const catchAsPoolShutdownError = (e: mixed) => new PgPoolShutdownError(e);
-export const isPgPoolShutdownError = (e: Error): e is PgPoolShutdownError =>
+export const makePoolShutdownError = (e: t.mixed) => new PgPoolShutdownError(e);
+export const isPoolShutdownError = (e: t.mixed): e is PgPoolShutdownError =>
   e instanceof PgPoolShutdownError;
 
-export class PgQueryError extends Error {
-  constructor(public readonly error: mixed, public readonly query: QueryConfig) {
-    super("Query failed.");
+export class PgDriverQueryError extends Error {
+  constructor(public readonly error: t.mixed, public readonly query: QueryConfig) {
+    super("Error raised by node-pg during query execution.");
 
-    Error.captureStackTrace(this, PgQueryError);
+    Error.captureStackTrace(this, PgDriverQueryError);
     this.name = this.constructor.name;
   }
 }
 
-export const catchAsQueryError = (query: QueryConfig) => (e: mixed) => new PgQueryError(e, query);
-export const isPgQueryError = (e: Error): e is PgQueryError => e instanceof PgQueryError;
+export const makeDriverQueryError = (query: QueryConfig) => (e: t.mixed) =>
+  new PgDriverQueryError(e, query);
+export const isDriverQueryError = (e: t.mixed): e is PgDriverQueryError =>
+  e instanceof PgDriverQueryError;
 
 export class PgRowCountError extends Error {
   constructor(
@@ -64,15 +62,35 @@ export class PgRowCountError extends Error {
   ) {
     super("Query returned an unexpected number of rows.");
 
-    Error.captureStackTrace(this, PgQueryError);
+    Error.captureStackTrace(this, PgRowCountError);
     this.name = this.constructor.name;
   }
 }
 
-export const isPgRowCountError = (e: Error): e is PgRowCountError => e instanceof PgRowCountError;
+export const makeRowCountError = (query: QueryConfig) => (e: t.mixed) =>
+  new PgDriverQueryError(e, query);
+export const isRowCountError = (e: t.mixed): e is PgRowCountError => e instanceof PgRowCountError;
+
+export class PgRowValidationError extends Error {
+  constructor(
+    public readonly type: t.Any,
+    public readonly value: t.mixed,
+    public readonly errors: t.Errors,
+  ) {
+    super("Validation of a result row failed.");
+
+    Error.captureStackTrace(this, PgRowValidationError);
+    this.name = this.constructor.name;
+  }
+}
+
+export const makeRowValidationError = (type: t.Any, value: t.mixed) => (errors: t.Errors) =>
+  new PgRowValidationError(type, value, errors);
+export const isRowValidationError = (e: t.mixed): e is PgRowValidationError =>
+  e instanceof PgRowValidationError;
 
 export class PgTypeParserSetupError extends Error {
-  constructor(public readonly error: mixed) {
+  constructor(public readonly error: t.mixed) {
     super("Type parser setup failed.");
 
     Error.captureStackTrace(this, PgTypeParserSetupError);
@@ -80,12 +98,12 @@ export class PgTypeParserSetupError extends Error {
   }
 }
 
-export const catchAsTypeParserSetupError = (e: mixed) => new PgTypeParserSetupError(e);
-export const isPgTypeParserSetupError = (e: Error): e is PgTypeParserSetupError =>
+export const makeTypeParserSetupError = (e: t.mixed) => new PgTypeParserSetupError(e);
+export const isTypeParserSetupError = (e: t.mixed): e is PgTypeParserSetupError =>
   e instanceof PgTypeParserSetupError;
 
 export class PgTransactionRollbackError extends Error {
-  constructor(public readonly error: mixed) {
+  constructor(public readonly rollbackError: t.mixed, public readonly connectionError: t.mixed) {
     super("A ROLLBACK was requested but not successfully completed.");
 
     Error.captureStackTrace(this, PgTransactionRollbackError);
@@ -93,35 +111,33 @@ export class PgTransactionRollbackError extends Error {
   }
 }
 
-export const catchAsTransactionRollbackError = (e: mixed) => new PgTransactionRollbackError(e);
-export const isPgTransactionRollbackError = (e: Error): e is PgTransactionRollbackError =>
+export const makeTransactionRollbackError = (rollbackError: t.mixed, connectionError: t.mixed) =>
+  new PgTransactionRollbackError(rollbackError, connectionError);
+export const isTransactionRollbackError = (e: t.mixed): e is PgTransactionRollbackError =>
   e instanceof PgTransactionRollbackError;
 
-export class PgUnhandledConnectionUsageError extends Error {
-  constructor(public readonly error: mixed) {
-    super("An unhandled error occurred while a connection was in use.");
+export class PgUnhandledConnectionError extends Error {
+  constructor(public readonly error: t.mixed) {
+    super("An unhandled error was raised by a connection.");
 
-    Error.captureStackTrace(this, PgUnhandledConnectionUsageError);
+    Error.captureStackTrace(this, PgUnhandledConnectionError);
     this.name = this.constructor.name;
   }
 }
 
-export const catchAsUnhandledConnectionUsageError = (e: mixed) =>
-  new PgUnhandledConnectionUsageError(e);
-export const ensureAsUnhandledConnectionUsageError = ensureError(
-  catchAsUnhandledConnectionUsageError,
-);
+export const makeUnhandledConnectionError = (e: t.mixed) => new PgUnhandledConnectionError(e);
+export const isUnhandledConnectionError = (e: t.mixed): e is PgUnhandledConnectionError =>
+  e instanceof PgUnhandledConnectionError;
 
-export class PgUnhandledTransactionError extends Error {
-  constructor(public readonly error: mixed) {
-    super("An unhandled error occurred during a transaction.");
+export class PgUnhandledPoolError extends Error {
+  constructor(public readonly error: t.mixed) {
+    super("An unhandled error was raised by a connection pool.");
 
-    Error.captureStackTrace(this, PgUnhandledTransactionError);
+    Error.captureStackTrace(this, PgUnhandledPoolError);
     this.name = this.constructor.name;
   }
 }
 
-export const catchAsUnhandledTransactionError = (e: mixed) => new PgUnhandledTransactionError(e);
-export const ensureAsUnhandledTransactionError = ensureError(catchAsUnhandledTransactionError);
-export const isPgUnhandledTransactionError = (e: Error): e is PgUnhandledTransactionError =>
-  e instanceof PgUnhandledTransactionError;
+export const makeUnhandledPoolError = (e: t.mixed) => new PgUnhandledPoolError(e);
+export const isUnhandledPoolError = (e: t.mixed): e is PgUnhandledPoolError =>
+  e instanceof PgUnhandledPoolError;

@@ -2,16 +2,16 @@ import { ReaderTaskEither } from "fp-ts/lib/ReaderTaskEither";
 import { tryCatch } from "fp-ts/lib/TaskEither";
 import { QueryConfig } from "pg";
 import * as pg from "pg";
-import { catchAsQueryError } from "./errors";
+import { makeDriverQueryError } from "./errors";
 import { Connection, ConnectionE, connectionLens } from "./types";
 
-export const withConnectionE = <E, A>(
-  reader: ReaderTaskEither<Connection, Error, A>,
-): ReaderTaskEither<ConnectionE<E>, Error, A> => reader.local<ConnectionE<E>>(connectionLens.get);
+export const widenToConnectionE = <E, L, A>(
+  program: ReaderTaskEither<Connection, L, A>,
+): ReaderTaskEither<ConnectionE<E>, L, A> => program.local<ConnectionE<E>>(connectionLens.get);
 
 export const wrapPoolClient = (poolClient: pg.PoolClient): Connection => ({
   query: (config: QueryConfig) =>
-    tryCatch(() => poolClient.query(config), catchAsQueryError(config)),
+    tryCatch(() => poolClient.query(config), makeDriverQueryError(config)),
 
   release: err => poolClient.release(err),
 });

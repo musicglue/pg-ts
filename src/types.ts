@@ -3,9 +3,18 @@ import { TaskEither } from "fp-ts/lib/TaskEither";
 import * as t from "io-ts";
 import { Lens } from "monocle-ts";
 import * as pg from "pg";
+import {
+  PgDriverQueryError,
+  PgPoolCheckoutError,
+  PgPoolShutdownError,
+  PgRowCountError,
+  PgTransactionRollbackError,
+  PgUnhandledConnectionError,
+  PgUnhandledPoolError,
+} from "./errors";
 
 export interface Connection {
-  query(config: pg.QueryConfig): TaskEither<Error, QueryResult>;
+  query(config: pg.QueryConfig): TaskEither<PgDriverQueryError, QueryResult>;
   release(err?: Error): void;
 }
 
@@ -14,24 +23,26 @@ export interface ConnectionE<E> {
   environment: E;
 }
 
+export type ConnectionError<L> = PgPoolCheckoutError | PgUnhandledConnectionError | L;
+
 export interface ConnectionPool {
-  end(): TaskEither<Error, void>;
-  withConnection<E, A>(
-    withConnection: ReaderTaskEither<ConnectionE<E>, Error, A>,
-  ): ReaderTaskEither<E, Error, A>;
+  end(): TaskEither<PgPoolShutdownError, void>;
+
+  withConnection<E, L, A>(
+    program: ReaderTaskEither<Connection, L, A>,
+  ): ReaderTaskEither<E, ConnectionError<L>, A>;
+
+  withConnectionE<E, L, A>(
+    program: ReaderTaskEither<ConnectionE<E>, L, A>,
+  ): ReaderTaskEither<E, ConnectionError<L>, A>;
 }
 
 export interface ConnectionPoolConfig extends pg.PoolConfig {
-  onError: (err: Error) => void;
+  onError: (err: PgUnhandledPoolError) => void;
   parsers?: TypeParsers;
 }
 
-export interface ErrorFailure {
-  error: Error;
-  result: "error";
-}
-
-export type QueryFailure<T extends t.Mixed> = ErrorFailure | ValidationFailure<T>;
+export type ErrorPredicate<T> = (v: t.mixed) => v is T;
 
 export interface QueryResult extends pg.QueryResult {
   rows: t.mixed[];
@@ -39,26 +50,25 @@ export interface QueryResult extends pg.QueryResult {
 
 export type RowTransformer = (x: t.mixed[]) => t.mixed[];
 
-export type TxIsolationLevel =
+export type TransactionError<L> =
+  | PgDriverQueryError
+  | PgTransactionRollbackError
+  | PgUnhandledConnectionError
+  | L;
+
+export type TransactionIsolationLevel =
   | "READ UNCOMMITTED"
   | "READ COMMITTED"
   | "REPEATABLE READ"
   | "SERIALIZABLE";
 
-export interface TxOptions {
+export interface TransactionOptions {
   readonly deferrable: boolean;
-  readonly isolation: TxIsolationLevel;
+  readonly isolation: TransactionIsolationLevel;
   readonly readOnly: boolean;
 }
 
 export type TypeParser<T> = (val: string) => T;
 export type TypeParsers = Record<string, TypeParser<any>>;
-
-export interface ValidationFailure<T extends t.Mixed> {
-  errors: t.Errors;
-  result: "validationFailed";
-  type: T;
-  value: t.mixed;
-}
 
 export const connectionLens = Lens.fromProp<ConnectionE<any>, "connection">("connection");

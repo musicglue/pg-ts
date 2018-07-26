@@ -1,46 +1,58 @@
 import { Either, left, right } from "fp-ts/lib/Either";
+import { compose, identity } from "fp-ts/lib/function";
 import { tryCatch as ioTryCatch } from "fp-ts/lib/IOEither";
 import { fromNullable } from "fp-ts/lib/Option";
+import { ask, fromTaskEither, ReaderTaskEither } from "fp-ts/lib/ReaderTaskEither";
 import {
-  ask,
-  fromTaskEither,
-  ReaderTaskEither,
-  tryCatch as readerTryCatch,
-} from "fp-ts/lib/ReaderTaskEither";
-import {
+  fromEither,
   fromIOEither,
   TaskEither,
   taskEither,
-  tryCatch,
   tryCatch as taskEitherTryCatch,
 } from "fp-ts/lib/TaskEither";
-import { Pool } from "pg";
 import * as pg from "pg";
-import { wrapPoolClient } from "./connection";
+import { widenToConnectionE, wrapPoolClient } from "./connection";
 import {
-  catchAsPoolCheckoutError,
-  catchAsPoolCreationError,
-  catchAsPoolShutdownError,
-  ensureAsUnhandledConnectionUsageError,
-  ensureAsUnhandledTransactionError,
-  isPgTransactionRollbackError,
+  isPoolCreationError,
+  isTransactionRollbackError,
+  makePoolCheckoutError,
+  makePoolCreationError,
+  makePoolShutdownError,
+  makeUnhandledConnectionError,
+  makeUnhandledPoolError,
+  PgPoolCreationError,
+  PgUnhandledConnectionError,
 } from "./errors";
 import { setupParsers } from "./parser";
-import { ConnectionE, ConnectionPool, ConnectionPoolConfig } from "./types";
-import { eitherToPromise } from "./utils/eitherToPromise";
+import {
+  Connection,
+  ConnectionE,
+  ConnectionError,
+  ConnectionPool,
+  ConnectionPoolConfig,
+  ErrorPredicate,
+} from "./types";
 
 export const makeConnectionPool = (
   poolConfig: ConnectionPoolConfig,
-): TaskEither<Error, ConnectionPool> => {
+): TaskEither<PgPoolCreationError, ConnectionPool> => {
   const { onError, parsers } = poolConfig;
 
   const poolIo = ioTryCatch(() => {
-    const pool = new Pool(poolConfig);
+    const pool = new pg.Pool(poolConfig);
 
-    pool.on("error", onError);
+    pool.on(
+      "error",
+      compose(
+        onError,
+        makeUnhandledPoolError,
+      ),
+    );
 
     return pool;
-  }, catchAsPoolCreationError);
+  }, makePoolCreationError).mapLeft(
+    error => (isPoolCreationError(error) ? error : makePoolCreationError(error)),
+  );
 
   return fromIOEither(poolIo)
     .chain(pool =>
@@ -51,33 +63,56 @@ export const makeConnectionPool = (
     .map(wrapConnectionPool);
 };
 
-export const wrapConnectionPool = (pool: pg.Pool): ConnectionPool => ({
-  end: () =>
-    taskEitherTryCatch(
-      () => ((pool as any).ending ? Promise.resolve<void>(undefined) : pool.end()),
-      catchAsPoolShutdownError,
-    ),
+const checkoutConnection = (pool: pg.Pool) =>
+  taskEitherTryCatch(() => pool.connect(), makePoolCheckoutError);
 
-  withConnection: <E, A>(withConnection: ReaderTaskEither<ConnectionE<E>, Error, A>) =>
-    ask<E, Error>().chain(environment =>
-      readerTryCatch<E, Error, pg.PoolClient>(() => pool.connect(), catchAsPoolCheckoutError)
+const executeProgramWithConnection = <E, L, A>(
+  environment: E,
+  program: ReaderTaskEither<ConnectionE<E>, L, A>,
+) => (connection: Connection): TaskEither<PgUnhandledConnectionError | L, A> =>
+  new TaskEither(
+    taskEitherTryCatch(() => program.run({ connection, environment }), makeUnhandledConnectionError)
+      .mapLeft<PgUnhandledConnectionError | L>(identity)
+      .chain(fromEither)
+      .fold<Either<PgUnhandledConnectionError | L, A>>(
+        err => {
+          // If a rollback error reaches this point, we should assume the connection
+          // is poisoned and ask the pool implementation to dispose of it.
+          connection.release(isTransactionRollbackError(err) ? err : undefined);
+          return left(err);
+        },
+        a => {
+          connection.release();
+          return right(a);
+        },
+      ),
+  );
+
+const withConnectionEFromPool = (pool: pg.Pool) => <E, L, A>(
+  program: ReaderTaskEither<ConnectionE<E>, L, A>,
+): ReaderTaskEither<E, ConnectionError<L>, A> =>
+  ask<E, ConnectionError<L>>()
+    .map(environment =>
+      checkoutConnection(pool)
         .map(wrapPoolClient)
-        .map(connection =>
-          tryCatch(
-            () => withConnection.run({ connection, environment }).then(eitherToPromise),
-            ensureAsUnhandledConnectionUsageError,
-          ).fold<Either<Error, A>>(
-            err => {
-              connection.release(isPgTransactionRollbackError(err) ? err : undefined);
-              return left(err);
-            },
-            a => {
-              connection.release();
-              return right(a);
-            },
-          ),
-        )
-        .map(te => new TaskEither(te))
-        .chain(fromTaskEither),
-    ),
-});
+        .mapLeft<ConnectionError<L>>(identity)
+        .chain(executeProgramWithConnection(environment, program)),
+    )
+    .chain(fromTaskEither);
+
+export const wrapConnectionPool = (pool: pg.Pool): ConnectionPool => {
+  const withConnectionE = withConnectionEFromPool(pool);
+
+  return {
+    end: () =>
+      taskEitherTryCatch(
+        () => ((pool as any).ending ? Promise.resolve<void>(undefined) : pool.end()),
+        makePoolShutdownError,
+      ),
+
+    withConnection: <E, L, A>(program: ReaderTaskEither<Connection, L, A>) =>
+      withConnectionE<E, L, A>(widenToConnectionE(program)),
+
+    withConnectionE,
+  };
+};
