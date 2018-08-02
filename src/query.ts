@@ -8,9 +8,6 @@ import * as t from "io-ts";
 import { QueryConfig } from "pg";
 import { widenToConnectionE } from "./connection";
 import {
-  isDriverQueryError,
-  isRowCountError,
-  isRowValidationError,
   makeRowValidationError,
   PgDriverQueryError,
   PgRowCountError,
@@ -41,11 +38,11 @@ const expectedOneFoundNoneErrorFailure = (query: QueryConfig) =>
 const expectedOneOrNoneErrorFailure = (query: QueryConfig) =>
   new PgRowCountError(query, "0 or 1", "> 1");
 
-export type QueryAnyError = PgDriverQueryError | PgRowCountError | PgRowValidationError;
+export type QueryAnyError = PgDriverQueryError | PgRowValidationError;
 export type QueryNoneError = PgDriverQueryError | PgRowCountError;
-export type QueryOneError = QueryAnyError;
-export type QueryOneOrMoreError = QueryAnyError;
-export type QueryOneOrNoneError = QueryAnyError;
+export type QueryOneError = PgDriverQueryError | PgRowValidationError | PgRowCountError;
+export type QueryOneOrMoreError = PgDriverQueryError | PgRowValidationError | PgRowCountError;
+export type QueryOneOrNoneError = PgDriverQueryError | PgRowValidationError | PgRowCountError;
 
 const queryAny = (transformer: RowTransformer = identity) => <A = any>(
   type: t.Type<A, any, t.mixed>,
