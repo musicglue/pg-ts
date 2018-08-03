@@ -1,6 +1,16 @@
 # pg-ts
 Typescript wrapper around node-postgres
 
+:boom: breaking change
+:rocket: new feature
+:bug: bug fix
+:wrench: chore
+:notebook: docs
+
+### v5.0.1
+- :bug: `QueryAnyError` union included `PgRowCountError`. This is incorrect (obvs).
+- :chore: Compiled with TS3.0.1.
+
 ## v5.0.0
 - `Either`ish functions no longer return a simple `Error` type in their `Left`s. Instead, we now
   provide a union of concrete error types that make it explicit what the failure conditions are.
