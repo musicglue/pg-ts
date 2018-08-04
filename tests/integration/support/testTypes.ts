@@ -13,6 +13,7 @@ import {
 import { QueryNoneError } from "../../../src/query";
 import { eitherToPromise } from "../../../src/utils/eitherToPromise";
 import { getPoolConfig, truncate } from "./db";
+import { Void } from "./types";
 
 const { queryNone } = camelCasedQueries;
 
@@ -34,7 +35,6 @@ export const connectionTest = <L, A>(
   );
 
   const prepareDb = createTable.chain(() => truncate("units")).chain(() => insertUnits);
-  const Void = undefined as void;
 
   type ProgramError = PgPoolCreationError | QueryNoneError | L;
 

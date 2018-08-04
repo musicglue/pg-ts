@@ -12,7 +12,7 @@ import {
 } from "../../src";
 import { fromTask } from "../../src/utils/taskEither";
 import { connectionTest } from "./support/testTypes";
-import { Unit } from "./support/types";
+import { Unit, Void } from "./support/types";
 
 const { queryNone, queryOne, queryAny, queryOneOrMore, queryOneOrNone } = camelCasedQueries;
 
@@ -34,7 +34,9 @@ describe("queries", () => {
                   return right(error);
                 }
 
-                return left(expect(error).toBeInstanceOf(PgRowCountError));
+                expect(error).toBeInstanceOf(PgRowCountError);
+
+                return left(Void);
               },
               () => left(fail(new Error("Query should have raised a PgRowCountError."))),
             )
