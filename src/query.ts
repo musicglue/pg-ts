@@ -49,11 +49,11 @@ export type QueryOneError = PgDriverQueryError | PgRowValidationError | PgRowCou
 export type QueryOneOrMoreError = PgDriverQueryError | PgRowValidationError | PgRowCountError;
 export type QueryOneOrNoneError = PgDriverQueryError | PgRowValidationError | PgRowCountError;
 
-const queryAny = (transformer: RowTransformer = identity) => <E = {}, A = any>(
+const queryAny = (transformer: RowTransformer = identity) => <A = any>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
-): ReaderTaskEither<E & ConnectedEnvironment, QueryAnyError, A[]> =>
-  ask<E & ConnectedEnvironment, QueryAnyError>()
+): ReaderTaskEither<ConnectedEnvironment, QueryAnyError, A[]> =>
+  ask<ConnectedEnvironment, QueryAnyError>()
     .map(connectionLens.get)
     .map(executeQuery(query))
     .chain(fromTaskEither)
@@ -66,10 +66,10 @@ const queryAny = (transformer: RowTransformer = identity) => <E = {}, A = any>(
     )
     .chain(fromEither);
 
-const queryNone = <E = {}>(
+const queryNone = (
   query: QueryConfig,
-): ReaderTaskEither<E & ConnectedEnvironment, QueryNoneError, void> =>
-  ask<E & ConnectedEnvironment, QueryNoneError>()
+): ReaderTaskEither<ConnectedEnvironment, QueryNoneError, void> =>
+  ask<ConnectedEnvironment, QueryNoneError>()
     .map(connectionLens.get)
     .map(executeQuery(query))
     .chain(fromTaskEither)
@@ -79,11 +79,11 @@ const queryNone = <E = {}>(
       return;
     });
 
-const queryOne = (transformer: RowTransformer = identity) => <E = {}, A = any>(
+const queryOne = (transformer: RowTransformer = identity) => <A = any>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
-): ReaderTaskEither<E & ConnectedEnvironment, QueryOneError, A> =>
-  ask<E & ConnectedEnvironment, QueryOneError>()
+): ReaderTaskEither<ConnectedEnvironment, QueryOneError, A> =>
+  ask<ConnectedEnvironment, QueryOneError>()
     .map(connectionLens.get)
     .map(executeQuery(query))
     .chain(fromTaskEither)
@@ -100,11 +100,11 @@ const queryOne = (transformer: RowTransformer = identity) => <E = {}, A = any>(
     .map(row => type.decode(row).mapLeft(makeRowValidationError(type, row)))
     .chain(fromEither);
 
-const queryOneOrMore = (transformer: RowTransformer = identity) => <E = {}, A = any>(
+const queryOneOrMore = (transformer: RowTransformer = identity) => <A = any>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
-): ReaderTaskEither<E & ConnectedEnvironment, QueryOneOrMoreError, NonEmptyArray<A>> =>
-  ask<E & ConnectedEnvironment, QueryOneOrMoreError>()
+): ReaderTaskEither<ConnectedEnvironment, QueryOneOrMoreError, NonEmptyArray<A>> =>
+  ask<ConnectedEnvironment, QueryOneOrMoreError>()
     .map(connectionLens.get)
     .map(executeQuery(query))
     .chain(fromTaskEither)
@@ -120,11 +120,11 @@ const queryOneOrMore = (transformer: RowTransformer = identity) => <E = {}, A = 
     .chain(fromEither)
     .map(rows => new NonEmptyArray(rows[0], rows.slice(1)));
 
-const queryOneOrNone = (transformer: RowTransformer = identity) => <E = {}, A = any>(
+const queryOneOrNone = (transformer: RowTransformer = identity) => <A = any>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
-): ReaderTaskEither<E & ConnectedEnvironment, QueryOneOrNoneError, Option<A>> =>
-  ask<E & ConnectedEnvironment, QueryOneOrNoneError>()
+): ReaderTaskEither<ConnectedEnvironment, QueryOneOrNoneError, Option<A>> =>
+  ask<ConnectedEnvironment, QueryOneOrNoneError>()
     .map(connectionLens.get)
     .map(executeQuery(query))
     .chain(fromTaskEither)

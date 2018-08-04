@@ -13,7 +13,6 @@ import {
 import { QueryNoneError } from "../../../src/query";
 import { eitherToPromise } from "../../../src/utils/eitherToPromise";
 import { getPoolConfig, truncate } from "./db";
-import { Void } from "./types";
 
 const { queryNone } = camelCasedQueries;
 
@@ -45,7 +44,6 @@ export const connectionTest = <L, A>(
         new TaskEither(
           pool
             .withConnection(prepareDb.mapLeft<ProgramError>(identity).chain(() => program))
-            .value(Void)
             .fold<Task<Either<ProgramError, A>>>(
               l => pool.end().fold(() => left(l), () => left(l)),
               r => pool.end().fold(() => right(r), () => right(r)),

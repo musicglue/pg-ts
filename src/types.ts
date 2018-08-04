@@ -31,9 +31,9 @@ export interface ConnectionPool {
 
   withConnection<L, A>(
     program: ReaderTaskEither<ConnectedEnvironment, L, A>,
-  ): ReaderTaskEither<void, ConnectionError<L>, A>;
+  ): TaskEither<ConnectionError<L>, A>;
 
-  withConnection<E, L, A>(
+  withConnectionE<E extends {}, L, A>(
     program: ReaderTaskEither<E & ConnectedEnvironment, L, A>,
   ): ReaderTaskEither<E, ConnectionError<L>, A>;
 }

@@ -91,9 +91,17 @@ const executeProgramWithConnection = <E extends {}, L, A>(
       ),
   );
 
-const withConnectionFromPool = (pool: pg.Pool) => <E, L, A>(
+const withConnectionFromPool = (pool: pg.Pool) => <L, A>(
+  program: ReaderTaskEither<ConnectedEnvironment, L, A>,
+) =>
+  checkoutConnection(pool)
+    .map(wrapPoolClient)
+    .mapLeft<ConnectionError<L>>(identity)
+    .chain(executeProgramWithConnection({}, program));
+
+const withConnectionEFromPool = (pool: pg.Pool) => <E extends {}, L, A>(
   program: ReaderTaskEither<E & ConnectedEnvironment, L, A>,
-): ReaderTaskEither<E, ConnectionError<L>, A> =>
+) =>
   ask<E, ConnectionError<L>>()
     .map(environment =>
       checkoutConnection(pool)
@@ -111,4 +119,5 @@ export const wrapConnectionPool = (pool: pg.Pool): ConnectionPool => ({
     ),
 
   withConnection: withConnectionFromPool(pool),
+  withConnectionE: withConnectionEFromPool(pool),
 });
