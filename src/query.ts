@@ -49,7 +49,7 @@ export type QueryOneError = PgDriverQueryError | PgRowValidationError | PgRowCou
 export type QueryOneOrMoreError = PgDriverQueryError | PgRowValidationError | PgRowCountError;
 export type QueryOneOrNoneError = PgDriverQueryError | PgRowValidationError | PgRowCountError;
 
-const queryAny = <E = {}>(transformer: RowTransformer = identity) => <A = any>(
+const queryAny = (transformer: RowTransformer = identity) => <E = {}, A = any>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
 ): ReaderTaskEither<E & ConnectedEnvironment, QueryAnyError, A[]> =>
@@ -79,7 +79,7 @@ const queryNone = <E = {}>(
       return;
     });
 
-const queryOne = <E = {}>(transformer: RowTransformer = identity) => <A = any>(
+const queryOne = (transformer: RowTransformer = identity) => <E = {}, A = any>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
 ): ReaderTaskEither<E & ConnectedEnvironment, QueryOneError, A> =>
@@ -100,7 +100,7 @@ const queryOne = <E = {}>(transformer: RowTransformer = identity) => <A = any>(
     .map(row => type.decode(row).mapLeft(makeRowValidationError(type, row)))
     .chain(fromEither);
 
-const queryOneOrMore = <E = {}>(transformer: RowTransformer = identity) => <A = any>(
+const queryOneOrMore = (transformer: RowTransformer = identity) => <E = {}, A = any>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
 ): ReaderTaskEither<E & ConnectedEnvironment, QueryOneOrMoreError, NonEmptyArray<A>> =>
@@ -120,7 +120,7 @@ const queryOneOrMore = <E = {}>(transformer: RowTransformer = identity) => <A = 
     .chain(fromEither)
     .map(rows => new NonEmptyArray(rows[0], rows.slice(1)));
 
-const queryOneOrNone = <E = {}>(transformer: RowTransformer = identity) => <A = any>(
+const queryOneOrNone = (transformer: RowTransformer = identity) => <E = {}, A = any>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
 ): ReaderTaskEither<E & ConnectedEnvironment, QueryOneOrNoneError, Option<A>> =>
