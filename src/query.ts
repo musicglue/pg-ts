@@ -6,14 +6,19 @@ import { fromEither as optionFromEither, Option } from "fp-ts/lib/Option";
 import { ask, fromEither, fromTaskEither, ReaderTaskEither } from "fp-ts/lib/ReaderTaskEither";
 import * as t from "io-ts";
 import { QueryConfig } from "pg";
-import { widenToConnectionE } from "./connection";
 import {
   makeRowValidationError,
   PgDriverQueryError,
   PgRowCountError,
   PgRowValidationError,
 } from "./errors";
-import { Connection, ConnectionE, ErrorPredicate, QueryResult, RowTransformer } from "./types";
+import {
+  ConnectedEnvironment,
+  Connection,
+  connectionLens,
+  QueryResult,
+  RowTransformer,
+} from "./types";
 import { defaultCamelCaser } from "./utils/camelify";
 
 const executeQuery = (query: QueryConfig) => (connection: Connection) => connection.query(query);
@@ -44,11 +49,12 @@ export type QueryOneError = PgDriverQueryError | PgRowValidationError | PgRowCou
 export type QueryOneOrMoreError = PgDriverQueryError | PgRowValidationError | PgRowCountError;
 export type QueryOneOrNoneError = PgDriverQueryError | PgRowValidationError | PgRowCountError;
 
-const queryAny = (transformer: RowTransformer = identity) => <A = any>(
+const queryAny = <E = {}>(transformer: RowTransformer = identity) => <A = any>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
-): ReaderTaskEither<Connection, QueryAnyError, A[]> =>
-  ask<Connection, QueryAnyError>()
+): ReaderTaskEither<E & ConnectedEnvironment, QueryAnyError, A[]> =>
+  ask<E & ConnectedEnvironment, QueryAnyError>()
+    .map(connectionLens.get)
     .map(executeQuery(query))
     .chain(fromTaskEither)
     .map(({ rows }) => transformer(rows))
@@ -60,33 +66,25 @@ const queryAny = (transformer: RowTransformer = identity) => <A = any>(
     )
     .chain(fromEither);
 
-const queryAnyE = (transformer: RowTransformer = identity) => {
-  const transformedQueryAny = queryAny(transformer);
-
-  return <E, A = any>(
-    type: t.Type<A, any, t.mixed>,
-    query: QueryConfig,
-  ): ReaderTaskEither<ConnectionE<E>, QueryAnyError, A[]> =>
-    widenToConnectionE(transformedQueryAny(type, query));
-};
-
-const queryNone = (query: QueryConfig): ReaderTaskEither<Connection, QueryNoneError, void> =>
-  ask<Connection, QueryNoneError>()
+const queryNone = <E = {}>(
+  query: QueryConfig,
+): ReaderTaskEither<E & ConnectedEnvironment, QueryNoneError, void> =>
+  ask<E & ConnectedEnvironment, QueryNoneError>()
+    .map(connectionLens.get)
     .map(executeQuery(query))
     .chain(fromTaskEither)
     .map(fromPredicate(isNoneResult, constant(expectedNoneFoundSomeErrorFailure(query))))
     .chain(fromEither)
-    .map<void>(() => undefined as any);
+    .map<void>(() => {
+      return;
+    });
 
-const queryNoneE = <E>(
-  query: QueryConfig,
-): ReaderTaskEither<ConnectionE<E>, QueryNoneError, void> => widenToConnectionE(queryNone(query));
-
-const queryOne = (transformer: RowTransformer = identity) => <A = any>(
+const queryOne = <E = {}>(transformer: RowTransformer = identity) => <A = any>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
-): ReaderTaskEither<Connection, QueryOneError, A> =>
-  ask<Connection, QueryOneError>()
+): ReaderTaskEither<E & ConnectedEnvironment, QueryOneError, A> =>
+  ask<E & ConnectedEnvironment, QueryOneError>()
+    .map(connectionLens.get)
     .map(executeQuery(query))
     .chain(fromTaskEither)
     .map(
@@ -102,21 +100,12 @@ const queryOne = (transformer: RowTransformer = identity) => <A = any>(
     .map(row => type.decode(row).mapLeft(makeRowValidationError(type, row)))
     .chain(fromEither);
 
-const queryOneE = (transformer: RowTransformer = identity) => {
-  const transformedQueryOne = queryOne(transformer);
-
-  return <E, A = any>(
-    type: t.Type<A, any, t.mixed>,
-    query: QueryConfig,
-  ): ReaderTaskEither<ConnectionE<E>, QueryOneError, A> =>
-    widenToConnectionE(transformedQueryOne(type, query));
-};
-
-const queryOneOrMore = (transformer: RowTransformer = identity) => <A = any>(
+const queryOneOrMore = <E = {}>(transformer: RowTransformer = identity) => <A = any>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
-): ReaderTaskEither<Connection, QueryOneOrMoreError, NonEmptyArray<A>> =>
-  ask<Connection, QueryOneOrMoreError>()
+): ReaderTaskEither<E & ConnectedEnvironment, QueryOneOrMoreError, NonEmptyArray<A>> =>
+  ask<E & ConnectedEnvironment, QueryOneOrMoreError>()
+    .map(connectionLens.get)
     .map(executeQuery(query))
     .chain(fromTaskEither)
     .map(fromPredicate(isNonEmptyResult, constant(expectedAtLeastOneErrorFailure(query))))
@@ -131,21 +120,12 @@ const queryOneOrMore = (transformer: RowTransformer = identity) => <A = any>(
     .chain(fromEither)
     .map(rows => new NonEmptyArray(rows[0], rows.slice(1)));
 
-const queryOneOrMoreE = (transformer: RowTransformer = identity) => {
-  const transformedQueryOneOrMore = queryOneOrMore(transformer);
-
-  return <E, A = any>(
-    type: t.Type<A, any, t.mixed>,
-    query: QueryConfig,
-  ): ReaderTaskEither<ConnectionE<E>, QueryOneOrMoreError, NonEmptyArray<A>> =>
-    widenToConnectionE(transformedQueryOneOrMore(type, query));
-};
-
-const queryOneOrNone = (transformer: RowTransformer = identity) => <A = any>(
+const queryOneOrNone = <E = {}>(transformer: RowTransformer = identity) => <A = any>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
-): ReaderTaskEither<Connection, QueryOneOrNoneError, Option<A>> =>
-  ask<Connection, QueryOneOrNoneError>()
+): ReaderTaskEither<E & ConnectedEnvironment, QueryOneOrNoneError, Option<A>> =>
+  ask<E & ConnectedEnvironment, QueryOneOrNoneError>()
+    .map(connectionLens.get)
     .map(executeQuery(query))
     .chain(fromTaskEither)
     .map(fromPredicate(isOneOrNoneResult, constant(expectedOneOrNoneErrorFailure(query))))
@@ -157,38 +137,18 @@ const queryOneOrNone = (transformer: RowTransformer = identity) => <A = any>(
         .chain(optionFromEither),
     );
 
-const queryOneOrNoneE = (transformer: RowTransformer = identity) => {
-  const transformedQueryOneOrNone = queryOneOrNone(transformer);
-
-  return <E, A = any>(
-    type: t.Type<A, any, t.mixed>,
-    query: QueryConfig,
-  ): ReaderTaskEither<ConnectionE<E>, QueryOneOrNoneError, Option<A>> =>
-    widenToConnectionE(transformedQueryOneOrNone(type, query));
-};
-
 export const configurableQueries = {
   queryAny,
-  queryAnyE,
   queryNone,
-  queryNoneE,
   queryOne,
-  queryOneE,
   queryOneOrMore,
-  queryOneOrMoreE,
   queryOneOrNone,
-  queryOneOrNoneE,
 };
 
 export const camelCasedQueries = {
   queryAny: queryAny(defaultCamelCaser),
-  queryAnyE: queryAnyE(defaultCamelCaser),
   queryNone,
-  queryNoneE,
   queryOne: queryOne(defaultCamelCaser),
-  queryOneE: queryOneE(defaultCamelCaser),
   queryOneOrMore: queryOneOrMore(defaultCamelCaser),
-  queryOneOrMoreE: queryOneOrMoreE(defaultCamelCaser),
   queryOneOrNone: queryOneOrNone(defaultCamelCaser),
-  queryOneOrNoneE: queryOneOrNoneE(defaultCamelCaser),
 };

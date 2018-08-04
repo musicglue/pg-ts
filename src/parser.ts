@@ -1,5 +1,5 @@
 import { constant } from "fp-ts/lib/function";
-import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
+import { tryCatch } from "fp-ts/lib/TaskEither";
 import * as pg from "pg";
 import { makeTypeParserSetupError, PgTypeParserSetupError } from "./errors";
 import { parseInterval } from "./pgTypes/interval";

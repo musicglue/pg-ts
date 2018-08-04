@@ -1,6 +1,5 @@
 export { defaultCamelCaser, makeCamelCaser, CamelifyOptions } from "./utils/camelify";
 export { SQL, SQLFragment } from "./utils/sql";
-export { widenToConnectionE } from "./connection";
 export {
   isPoolCheckoutError,
   isPoolCreationError,
@@ -33,10 +32,5 @@ export {
   QueryOneOrMoreError,
   QueryOneOrNoneError,
 } from "./query";
-export {
-  defaultTxOptions,
-  withTransactionC,
-  withTransactionE,
-  withTransactionEC,
-} from "./transaction";
+export { defaultTxOptions, withTransaction } from "./transaction";
 export * from "./types";

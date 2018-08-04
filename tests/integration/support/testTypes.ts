@@ -3,34 +3,21 @@ import { identity } from "fp-ts/lib/function";
 import { ReaderTaskEither } from "fp-ts/lib/ReaderTaskEither";
 import { Task } from "fp-ts/lib/Task";
 import { TaskEither } from "fp-ts/lib/TaskEither";
-import * as t from "io-ts";
-import { parse } from "pg-connection-string";
 import {
   camelCasedQueries,
-  Connection,
-  ConnectionE,
-  ConnectionPoolConfig,
-  ErrorPredicate,
-  isPoolCreationError,
+  ConnectedEnvironment,
   makeConnectionPool,
-  PgDriverQueryError,
-  PgPoolCheckoutError,
   PgPoolCreationError,
-  PgRowCountError,
   SQL,
 } from "../../../src";
-import { widenToConnectionE } from "../../../src/connection";
 import { QueryNoneError } from "../../../src/query";
 import { eitherToPromise } from "../../../src/utils/eitherToPromise";
 import { getPoolConfig, truncate } from "./db";
 
 const { queryNone } = camelCasedQueries;
 
-export const connectionTest = <L, A>(program: ReaderTaskEither<Connection, L, A>) =>
-  connectionETest(widenToConnectionE(program));
-
-export const connectionETest = <L, A>(
-  program: ReaderTaskEither<ConnectionE<{}>, L, A>,
+export const connectionTest = <L, A>(
+  program: ReaderTaskEither<ConnectedEnvironment, L, A>,
 ): Promise<A> => {
   const connectionString = process.env.DATABASE_URL;
 
@@ -46,9 +33,8 @@ export const connectionETest = <L, A>(
     SQL`INSERT INTO units (id, name) VALUES (1, 'Car'), (2, 'Bike'), (3, 'Motorbike'), (4, 'Car');`,
   );
 
-  const prepareDb = widenToConnectionE(
-    createTable.chain(() => truncate("units")).chain(() => insertUnits),
-  );
+  const prepareDb = createTable.chain(() => truncate("units")).chain(() => insertUnits);
+  const Void = undefined as void;
 
   type ProgramError = PgPoolCreationError | QueryNoneError | L;
 
@@ -58,8 +44,8 @@ export const connectionETest = <L, A>(
       pool =>
         new TaskEither(
           pool
-            .withConnectionE(prepareDb.mapLeft<ProgramError>(identity).chain(() => program))
-            .value({})
+            .withConnection(prepareDb.mapLeft<ProgramError>(identity).chain(() => program))
+            .value(Void)
             .fold<Task<Either<ProgramError, A>>>(
               l => pool.end().fold(() => left(l), () => left(l)),
               r => pool.end().fold(() => right(r), () => right(r)),

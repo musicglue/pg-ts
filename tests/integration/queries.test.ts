@@ -4,7 +4,7 @@ import { TaskEither } from "fp-ts/lib/TaskEither";
 import * as t from "io-ts";
 import {
   camelCasedQueries,
-  Connection,
+  ConnectedEnvironment,
   isRowCountError,
   isRowValidationError,
   PgRowCountError,
@@ -22,7 +22,7 @@ describe("queries", () => {
 
   test("queryNone with a query that returns > 0 rows returns PgRowCountError", () =>
     connectionTest(
-      ask<Connection, void>()
+      ask<ConnectedEnvironment, void>()
         .map(() => {
           const foo = queryNone(SQL`SELECT * FROM units`)
             .fold<Either<void, PgRowCountError>>(
@@ -55,7 +55,7 @@ describe("queries", () => {
 
   test("queryOne with a query that returns 1 unparseable row returns a validation error", () =>
     connectionTest(
-      ask<Connection, void>()
+      ask<ConnectedEnvironment, void>()
         .map(() =>
           queryOne(Unit, SQL`SELECT 'foo' as id, 1 as name FROM units WHERE id = 2`)
             .fold<Either<void, t.Errors>>(
@@ -76,7 +76,7 @@ describe("queries", () => {
 
   test("queryOne with a query that returns 0 rows returns PgRowCountError", () =>
     connectionTest(
-      ask<Connection, void>()
+      ask<ConnectedEnvironment, void>()
         .map(() =>
           queryOne(Unit, SQL`SELECT * FROM units WHERE id = 999`)
             .fold<Either<void, PgRowCountError>>(
@@ -101,7 +101,7 @@ describe("queries", () => {
 
   test("queryOne with a query that returns > 1 rows returns PgRowCountError", () =>
     connectionTest(
-      ask<Connection, void>()
+      ask<ConnectedEnvironment, void>()
         .map(() =>
           queryOne(Unit, SQL`SELECT * FROM units`)
             .fold<Either<void, PgRowCountError>>(
@@ -148,7 +148,7 @@ describe("queries", () => {
 
   test("queryOneOrMore with a query that returns 0 rows returns PgRowCountError", () =>
     connectionTest(
-      ask<Connection, void>()
+      ask<ConnectedEnvironment, void>()
         .map(() =>
           queryOneOrMore(Unit, SQL`SELECT * FROM units WHERE id = 0`)
             .fold<Either<void, PgRowCountError>>(
@@ -203,7 +203,7 @@ describe("queries", () => {
 
   test("queryOneOrNone with a query that returns 2 rows returns PgRowCountError", () =>
     connectionTest(
-      ask<Connection, void>()
+      ask<ConnectedEnvironment, void>()
         .map(() =>
           queryOneOrNone(Unit, SQL`SELECT * FROM units WHERE name = 'Car'`)
             .fold<Either<void, PgRowCountError>>(

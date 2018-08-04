@@ -25,15 +25,15 @@
     "pg": "7.4.3"
   },
   "devDependencies": {
-    "@types/jest": "23.1.0",
-    "@types/lodash": "4.14.109",
-    "@types/pg": "7.4.9",
-    "jest": "23.1.0",
+    "@types/jest": "23.3.1",
+    "@types/lodash": "4.14.116",
+    "@types/pg": "7.4.10",
+    "jest": "23.4.2",
     "pg-connection-string": "2.0.0",
-    "prettier": "1.13.5",
-    "ts-jest": "23.0.1",
+    "prettier": "1.14.0",
+    "ts-jest": "23.1.2",
     "ts-node": "7.0.0",
-    "tslint": "5.10.0",
+    "tslint": "5.11.0",
     "typescript": "3.0.1"
   },
   "jest": {
@@ -49,8 +49,9 @@
       "js"
     ],
     "transform": {
-      "\\.(ts|tsx)$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+      "\\.(ts|tsx)$": "ts-jest"
     },
+    "testEnvironment": "node",
     "testRegex": "/tests/.*\\.test\\.ts$"
   },
   "prettier": {

@@ -11,7 +11,7 @@ import {
   tryCatch as taskEitherTryCatch,
 } from "fp-ts/lib/TaskEither";
 import * as pg from "pg";
-import { widenToConnectionE, wrapPoolClient } from "./connection";
+import { wrapPoolClient } from "./connection";
 import {
   isPoolCreationError,
   isTransactionRollbackError,
@@ -25,12 +25,12 @@ import {
 } from "./errors";
 import { setupParsers } from "./parser";
 import {
+  ConnectedEnvironment,
   Connection,
-  ConnectionE,
   ConnectionError,
   ConnectionPool,
   ConnectionPoolConfig,
-  ErrorPredicate,
+  ConnectionSymbol,
 } from "./types";
 
 export const makeConnectionPool = (
@@ -66,12 +66,15 @@ export const makeConnectionPool = (
 const checkoutConnection = (pool: pg.Pool) =>
   taskEitherTryCatch(() => pool.connect(), makePoolCheckoutError);
 
-const executeProgramWithConnection = <E, L, A>(
+const executeProgramWithConnection = <E extends {}, L, A>(
   environment: E,
-  program: ReaderTaskEither<ConnectionE<E>, L, A>,
+  program: ReaderTaskEither<E & ConnectedEnvironment, L, A>,
 ) => (connection: Connection): TaskEither<PgUnhandledConnectionError | L, A> =>
   new TaskEither(
-    taskEitherTryCatch(() => program.run({ connection, environment }), makeUnhandledConnectionError)
+    taskEitherTryCatch(
+      () => program.run(Object.assign({}, environment, { [ConnectionSymbol]: connection })),
+      makeUnhandledConnectionError,
+    )
       .mapLeft<PgUnhandledConnectionError | L>(identity)
       .chain(fromEither)
       .fold<Either<PgUnhandledConnectionError | L, A>>(
@@ -88,8 +91,8 @@ const executeProgramWithConnection = <E, L, A>(
       ),
   );
 
-const withConnectionEFromPool = (pool: pg.Pool) => <E, L, A>(
-  program: ReaderTaskEither<ConnectionE<E>, L, A>,
+const withConnectionFromPool = (pool: pg.Pool) => <E, L, A>(
+  program: ReaderTaskEither<E & ConnectedEnvironment, L, A>,
 ): ReaderTaskEither<E, ConnectionError<L>, A> =>
   ask<E, ConnectionError<L>>()
     .map(environment =>
@@ -100,19 +103,12 @@ const withConnectionEFromPool = (pool: pg.Pool) => <E, L, A>(
     )
     .chain(fromTaskEither);
 
-export const wrapConnectionPool = (pool: pg.Pool): ConnectionPool => {
-  const withConnectionE = withConnectionEFromPool(pool);
+export const wrapConnectionPool = (pool: pg.Pool): ConnectionPool => ({
+  end: () =>
+    taskEitherTryCatch(
+      () => ((pool as any).ending ? Promise.resolve<void>(undefined) : pool.end()),
+      makePoolShutdownError,
+    ),
 
-  return {
-    end: () =>
-      taskEitherTryCatch(
-        () => ((pool as any).ending ? Promise.resolve<void>(undefined) : pool.end()),
-        makePoolShutdownError,
-      ),
-
-    withConnection: <E, L, A>(program: ReaderTaskEither<Connection, L, A>) =>
-      withConnectionE<E, L, A>(widenToConnectionE(program)),
-
-    withConnectionE,
-  };
-};
+  withConnection: withConnectionFromPool(pool),
+});

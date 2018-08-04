@@ -1,13 +1,5 @@
-import { ReaderTaskEither } from "fp-ts/lib/ReaderTaskEither";
 import { parse } from "pg-connection-string";
-import {
-  camelCasedQueries,
-  Connection,
-  ConnectionPoolConfig,
-  PgDriverQueryError,
-  PgRowCountError,
-  SQL,
-} from "../../../src";
+import { camelCasedQueries, ConnectionPoolConfig, SQL } from "../../../src";
 
 const { queryNone } = camelCasedQueries;
 

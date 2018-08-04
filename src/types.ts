@@ -7,7 +7,6 @@ import {
   PgDriverQueryError,
   PgPoolCheckoutError,
   PgPoolShutdownError,
-  PgRowCountError,
   PgTransactionRollbackError,
   PgUnhandledConnectionError,
   PgUnhandledPoolError,
@@ -18,9 +17,11 @@ export interface Connection {
   release(err?: Error): void;
 }
 
-export interface ConnectionE<E> {
-  connection: Connection;
-  environment: E;
+export const ConnectionSymbol = Symbol("pg-ts connection");
+export type ConnectionSymbol = typeof ConnectionSymbol;
+
+export interface ConnectedEnvironment {
+  [ConnectionSymbol]: Connection;
 }
 
 export type ConnectionError<L> = PgPoolCheckoutError | PgUnhandledConnectionError | L;
@@ -28,12 +29,12 @@ export type ConnectionError<L> = PgPoolCheckoutError | PgUnhandledConnectionErro
 export interface ConnectionPool {
   end(): TaskEither<PgPoolShutdownError, void>;
 
-  withConnection<E, L, A>(
-    program: ReaderTaskEither<Connection, L, A>,
-  ): ReaderTaskEither<E, ConnectionError<L>, A>;
+  withConnection<L, A>(
+    program: ReaderTaskEither<ConnectedEnvironment, L, A>,
+  ): ReaderTaskEither<void, ConnectionError<L>, A>;
 
-  withConnectionE<E, L, A>(
-    program: ReaderTaskEither<ConnectionE<E>, L, A>,
+  withConnection<E, L, A>(
+    program: ReaderTaskEither<E & ConnectedEnvironment, L, A>,
   ): ReaderTaskEither<E, ConnectionError<L>, A>;
 }
 
@@ -71,4 +72,6 @@ export interface TransactionOptions {
 export type TypeParser<T> = (val: string) => T;
 export type TypeParsers = Record<string, TypeParser<any>>;
 
-export const connectionLens = Lens.fromProp<ConnectionE<any>, "connection">("connection");
+export const connectionLens = Lens.fromProp<ConnectedEnvironment, ConnectionSymbol>(
+  ConnectionSymbol,
+);

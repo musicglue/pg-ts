@@ -2,24 +2,16 @@ import { Either } from "fp-ts/lib/Either";
 import { constant, identity } from "fp-ts/lib/function";
 import { ask, fromTaskEither, ReaderTaskEither } from "fp-ts/lib/ReaderTaskEither";
 import { fromEither, TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
-import { isError } from "lodash";
-import { inspect } from "util";
-import { widenToConnectionE } from "./connection";
 import {
   isDriverQueryError,
-  isRowCountError,
   isTransactionRollbackError,
   makeUnhandledConnectionError,
-  PgDriverQueryError,
-  PgRowCountError,
   PgTransactionRollbackError,
-  PgUnhandledConnectionError,
 } from "./errors";
 import {
+  ConnectedEnvironment,
   Connection,
-  ConnectionE,
-  ErrorPredicate,
-  QueryResult,
+  connectionLens,
   TransactionError,
   TransactionOptions,
 } from "./types";
@@ -86,57 +78,21 @@ const executeTransaction = <L, A>(
     )
     .chain(fromEither);
 
-export function withTransactionC<L, A>(
+export function withTransaction<E, L, A>(
   x: Partial<TransactionOptions>,
-  y: ReaderTaskEither<Connection, L, A>,
-): ReaderTaskEither<Connection, TransactionError<L>, A>;
-export function withTransactionC<L, A>(
-  x: ReaderTaskEither<Connection, L, A>,
-): ReaderTaskEither<Connection, TransactionError<L>, A>;
-export function withTransactionC<L, A>(
+  y: ReaderTaskEither<E & ConnectedEnvironment, L, A>,
+): ReaderTaskEither<E & ConnectedEnvironment, TransactionError<L>, A>;
+export function withTransaction<E, L, A>(
+  x: ReaderTaskEither<E & ConnectedEnvironment, L, A>,
+): ReaderTaskEither<E & ConnectedEnvironment, TransactionError<L>, A>;
+export function withTransaction<E, L, A>(
   x: any,
   y?: any,
-): ReaderTaskEither<Connection, TransactionError<L>, A> {
+): ReaderTaskEither<E & ConnectedEnvironment, TransactionError<L>, A> {
   const opts: TransactionOptions = y ? { ...defaultTxOptions, ...x } : defaultTxOptions;
-  const program: ReaderTaskEither<Connection, L, A> = y || x;
+  const program: ReaderTaskEither<E & ConnectedEnvironment, L, A> = y || x;
 
-  return ask<Connection, TransactionError<L>>()
-    .map(connection => executeTransaction(connection, opts, () => program.run(connection)))
+  return ask<E & ConnectedEnvironment, TransactionError<L>>()
+    .map(e => executeTransaction(connectionLens.get(e), opts, () => program.run(e)))
     .chain(fromTaskEither);
-}
-
-export function withTransactionE<E, L, A>(
-  x: Partial<TransactionOptions>,
-  y: ReaderTaskEither<ConnectionE<E>, L, A>,
-): ReaderTaskEither<ConnectionE<E>, TransactionError<L>, A>;
-export function withTransactionE<E, L, A>(
-  x: ReaderTaskEither<ConnectionE<E>, L, A>,
-): ReaderTaskEither<ConnectionE<E>, TransactionError<L>, A>;
-export function withTransactionE<E, L, A>(
-  x: any,
-  y?: any,
-): ReaderTaskEither<ConnectionE<E>, TransactionError<L>, A> {
-  const opts: TransactionOptions = y ? { ...defaultTxOptions, ...x } : defaultTxOptions;
-  const program: ReaderTaskEither<ConnectionE<E>, L, A> = y || x;
-
-  return ask<ConnectionE<E>, TransactionError<L>>()
-    .map(e => executeTransaction(e.connection, opts, () => program.run(e)))
-    .chain(fromTaskEither);
-}
-
-export function withTransactionEC<E, L, A>(
-  x: Partial<TransactionOptions>,
-  y: ReaderTaskEither<Connection, L, A>,
-): ReaderTaskEither<ConnectionE<E>, TransactionError<L>, A>;
-export function withTransactionEC<E, L, A>(
-  x: ReaderTaskEither<Connection, L, A>,
-): ReaderTaskEither<ConnectionE<E>, TransactionError<L>, A>;
-export function withTransactionEC<E, L, A>(
-  x: any,
-  y?: any,
-): ReaderTaskEither<ConnectionE<E>, TransactionError<L>, A> {
-  const opts: TransactionOptions = y ? { ...defaultTxOptions, ...x } : defaultTxOptions;
-  const program: ReaderTaskEither<Connection, L, A> = y || x;
-
-  return withTransactionE(opts, widenToConnectionE(program));
 }
