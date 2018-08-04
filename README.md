@@ -7,6 +7,11 @@ Typescript wrapper around node-postgres
 :wrench: chore
 :notebook: docs
 
+## v6.0.0
+- :boom: Simplified the API by always requiring an environment object in which pg-ts can
+  store it's state (`Connection`) under a `Symbol` key. This will never conflict with other
+  keys in the `E`, so we can now remove `ConnectionE` and related subsequent design decisions.
+
 ### v5.0.1
 - :bug: `QueryAnyError` union included `PgRowCountError`. This is incorrect (obvs).
 - :wrench: Compiled with TS3.0.1.
