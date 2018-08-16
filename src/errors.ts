@@ -2,6 +2,8 @@ import * as t from "io-ts";
 import { QueryConfig } from "pg";
 
 export class PgPoolCheckoutError extends Error {
+  public readonly _T = Symbol("PgPoolCheckoutError");
+
   constructor(public readonly error: t.mixed) {
     super("Unable to checkout a connection from the pool.");
 
@@ -15,6 +17,8 @@ export const isPoolCheckoutError = (e: t.mixed): e is PgPoolCheckoutError =>
   e instanceof PgPoolCheckoutError;
 
 export class PgPoolCreationError extends Error {
+  public readonly _T = Symbol("PgPoolCreationError");
+
   constructor(public readonly error: t.mixed) {
     super("Unable to create a connection pool.");
 
@@ -28,6 +32,8 @@ export const isPoolCreationError = (e: t.mixed): e is PgPoolCreationError =>
   e instanceof PgPoolCreationError;
 
 export class PgPoolShutdownError extends Error {
+  public readonly _T = Symbol("PgPoolShutdownError");
+
   constructor(public readonly error: t.mixed) {
     super("Unable to shutdown a connection pool.");
 
@@ -41,6 +47,8 @@ export const isPoolShutdownError = (e: t.mixed): e is PgPoolShutdownError =>
   e instanceof PgPoolShutdownError;
 
 export class PgDriverQueryError extends Error {
+  public readonly _T = Symbol("PgDriverQueryError");
+
   constructor(public readonly error: t.mixed, public readonly query: QueryConfig) {
     super("Error raised by node-pg during query execution.");
 
@@ -55,6 +63,8 @@ export const isDriverQueryError = (e: t.mixed): e is PgDriverQueryError =>
   e instanceof PgDriverQueryError;
 
 export class PgRowCountError extends Error {
+  public readonly _T = Symbol("PgRowCountError");
+
   constructor(
     public readonly query: QueryConfig,
     public readonly expected: string,
@@ -72,6 +82,8 @@ export const makeRowCountError = (query: QueryConfig) => (e: t.mixed) =>
 export const isRowCountError = (e: t.mixed): e is PgRowCountError => e instanceof PgRowCountError;
 
 export class PgRowValidationError extends Error {
+  public readonly _T = Symbol("PgRowValidationError");
+
   constructor(
     public readonly type: t.Any,
     public readonly value: t.mixed,
@@ -90,6 +102,8 @@ export const isRowValidationError = (e: t.mixed): e is PgRowValidationError =>
   e instanceof PgRowValidationError;
 
 export class PgTypeParserSetupError extends Error {
+  public readonly _T = Symbol("PgTypeParserSetupError");
+
   constructor(public readonly error: t.mixed) {
     super("Type parser setup failed.");
 
@@ -103,6 +117,8 @@ export const isTypeParserSetupError = (e: t.mixed): e is PgTypeParserSetupError 
   e instanceof PgTypeParserSetupError;
 
 export class PgTransactionRollbackError extends Error {
+  public readonly _T = Symbol("PgTransactionRollbackError");
+
   constructor(public readonly rollbackError: t.mixed, public readonly connectionError: t.mixed) {
     super("A ROLLBACK was requested but not successfully completed.");
 
@@ -117,6 +133,8 @@ export const isTransactionRollbackError = (e: t.mixed): e is PgTransactionRollba
   e instanceof PgTransactionRollbackError;
 
 export class PgUnhandledConnectionError extends Error {
+  public readonly _T = Symbol("PgUnhandledConnectionError");
+
   constructor(public readonly error: t.mixed) {
     super("An unhandled error was raised by a connection.");
 
@@ -130,6 +148,8 @@ export const isUnhandledConnectionError = (e: t.mixed): e is PgUnhandledConnecti
   e instanceof PgUnhandledConnectionError;
 
 export class PgUnhandledPoolError extends Error {
+  public readonly _T = Symbol("PgUnhandledPoolError");
+
   constructor(public readonly error: t.mixed) {
     super("An unhandled error was raised by a connection pool.");
 

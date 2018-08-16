@@ -7,6 +7,9 @@ Typescript wrapper around node-postgres
 :wrench: chore
 :notebook: docs
 
+### v6.0.1
+- :wrench: add _T symbol to uniquely identify error classes
+
 ## v6.0.0
 - :boom: Simplified the API by always requiring an environment object in which pg-ts can
   store it's state (`Connection`) under a `Symbol` key. This will never conflict with other
