@@ -7,6 +7,11 @@ Typescript wrapper around node-postgres
 :wrench: chore
 :notebook: docs
 
+## v7.0.0
+- :boom: `fp-ts@1.7.1`
+- :boom: `io-ts@1.3.0`
+- :boom: `monocle-ts@1.2.0`
+
 ### v6.0.1
 - :wrench: add _T symbol to uniquely identify error classes
 
