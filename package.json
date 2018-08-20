@@ -18,7 +18,7 @@
     "test": "NODE_ENV=test jest --runInBand"
   },
   "dependencies": {
-    "fp-ts": "1.7.1",
+    "fp-ts": "1.8.0",
     "io-ts": "1.3.0",
     "lodash": "4.17.10",
     "monocle-ts": "1.2.0",
