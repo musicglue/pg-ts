@@ -59,7 +59,7 @@ typings/
 
 # Project ignores
 build/
-dist/
+#dist/
 
 # Editor config
 .vscode
