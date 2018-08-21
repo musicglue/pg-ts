@@ -8,7 +8,7 @@ Typescript wrapper around node-postgres
 :notebook: docs
 
 ## v7.0.0
-- :boom: `fp-ts@1.7.1`
+- :boom: `fp-ts@1.8.0`
 - :boom: `io-ts@1.3.0`
 - :boom: `monocle-ts@1.2.0`
 
