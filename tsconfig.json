@@ -2,10 +2,11 @@
   "compilerOptions": {
     "declaration": true,
     "module": "commonjs",
+    "noErrorTruncation": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
-    "noUnusedLocals": false,
+    "noUnusedLocals": true,
     "noUnusedParameters": true,
     "outDir": "build",
     "pretty": true,

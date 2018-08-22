@@ -21,6 +21,7 @@ import {
   makeUnhandledConnectionError,
   makeUnhandledPoolError,
   PgPoolCreationError,
+  PgTypeParserSetupError,
   PgUnhandledConnectionError,
 } from "./errors";
 import { setupParsers } from "./parser";
@@ -35,7 +36,7 @@ import {
 
 export const makeConnectionPool = (
   poolConfig: ConnectionPoolConfig,
-): TaskEither<PgPoolCreationError, ConnectionPool> => {
+): TaskEither<PgPoolCreationError | PgTypeParserSetupError, ConnectionPool> => {
   const { onError, parsers } = poolConfig;
 
   const poolIo = ioTryCatch(() => {
@@ -55,10 +56,11 @@ export const makeConnectionPool = (
   );
 
   return fromIOEither(poolIo)
+    .mapLeft<PgPoolCreationError | PgTypeParserSetupError>(identity)
     .chain(pool =>
       fromNullable(parsers)
         .map(setupParsers(pool))
-        .getOrElse(taskEither.of(pool)),
+        .getOrElse(taskEither.of<PgTypeParserSetupError, pg.Pool>(pool)),
     )
     .map(wrapConnectionPool);
 };

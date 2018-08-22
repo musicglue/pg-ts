@@ -7,6 +7,7 @@ import {
   ConnectedEnvironment,
   isRowCountError,
   PgRowCountError,
+  PgRowValidationError,
   SQL,
   TransactionError,
   withTransaction,
@@ -63,6 +64,9 @@ describe("transaction", () => {
         )
         .chain(fromReader)
         .chain(fromTaskEither)
+        .mapLeft<TransactionError<QueryNoneError> | UnexpectedRightError | PgRowValidationError>(
+          identity,
+        )
         .chain(() => queryAny(Unit, SQL`SELECT * FROM units WHERE id >= 10 ORDER BY id`))
         .map(units => {
           expect(units).toHaveLength(0);

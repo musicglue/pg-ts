@@ -8,8 +8,6 @@ interface PGNamedIntervalObject<T> {
   years: T | undefined;
 }
 
-type PGIntervalField = keyof PGNamedIntervalObject<any>;
-
 interface PGIntervalObject<T> extends Record<string, T | undefined>, PGNamedIntervalObject<T> {}
 
 const NEGATION_INDEX = 8;

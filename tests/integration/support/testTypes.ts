@@ -7,7 +7,10 @@ import {
   camelCasedQueries,
   ConnectedEnvironment,
   makeConnectionPool,
+  PgPoolCheckoutError,
   PgPoolCreationError,
+  PgTypeParserSetupError,
+  PgUnhandledConnectionError,
   SQL,
 } from "../../../src";
 import { QueryNoneError } from "../../../src/query";
@@ -35,7 +38,13 @@ export const connectionTest = <L, A>(
 
   const prepareDb = createTable.chain(() => truncate("units")).chain(() => insertUnits);
 
-  type ProgramError = PgPoolCreationError | QueryNoneError | L;
+  type ProgramError =
+    | PgPoolCheckoutError
+    | PgPoolCreationError
+    | PgTypeParserSetupError
+    | PgUnhandledConnectionError
+    | QueryNoneError
+    | L;
 
   return makeConnectionPool(getPoolConfig(connectionString))
     .mapLeft<ProgramError>(identity)

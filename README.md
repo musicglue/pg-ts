@@ -7,6 +7,13 @@ Typescript wrapper around node-postgres
 :wrench: chore
 :notebook: docs
 
+### v8.0.0
+- :bug: fix broken nominal typing on classes by changing `public readonly _T = "<class name>"`
+  to `public readonly _<class name>: void`.
+- :boom: as a result of fixing nominal typing, `makeConnectionPool` now returns an error union
+  of `PgPoolCreationError | PgTypeParserSetupError` instead of `PgPoolCreationError`. Other errors
+  may occur in application code as a result of the error classes now being correctly differentiated.
+
 ## v7.0.0
 - :boom: `fp-ts@1.8.0`
 - :boom: `io-ts@1.3.0`
