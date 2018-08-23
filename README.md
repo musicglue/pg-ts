@@ -7,7 +7,11 @@ Typescript wrapper around node-postgres
 :wrench: chore
 :notebook: docs
 
-### v8.0.0
+## v8.0.1
+- :bug: sql fragment parser should unwrap complex types (e.g. NonEmptyArray, Option) before
+  passing it to the driver.
+
+## v8.0.0
 - :bug: fix broken nominal typing on classes by changing `public readonly _T = "<class name>"`
   to `public readonly _<class name>: void`.
 - :boom: as a result of fixing nominal typing, `makeConnectionPool` now returns an error union

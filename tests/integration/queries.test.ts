@@ -1,4 +1,5 @@
 import { Either, left, right } from "fp-ts/lib/Either";
+import { NonEmptyArray } from "fp-ts/lib/NonEmptyArray";
 import { ask, fromReader, fromTaskEither } from "fp-ts/lib/ReaderTaskEither";
 import { TaskEither } from "fp-ts/lib/TaskEither";
 import * as t from "io-ts";
@@ -50,9 +51,9 @@ describe("queries", () => {
 
   test("queryOne with a query that returns 1 parseable row returns a single parsed type", () =>
     connectionTest(
-      queryOne(Unit, SQL`SELECT * FROM units WHERE id = 2`)
-        .mapLeft(fail)
-        .map(unit => expect(unit).toMatchObject({ id: 2, name: "Bike" })),
+      queryOne(Unit, SQL`SELECT * FROM units WHERE id = 2`).map(unit =>
+        expect(unit).toMatchObject({ id: 2, name: "Bike" }),
+      ),
     ));
 
   test("queryOne with a query that returns 1 unparseable row returns a validation error", () =>
@@ -128,18 +129,15 @@ describe("queries", () => {
 
   test("queryOneOrMore with a query that returns 1 parseable row returns an array of a single parsed type", () =>
     connectionTest(
-      queryOneOrMore(Unit, SQL`SELECT * FROM units WHERE id = 2`)
-        .mapLeft(fail)
-        .map(units => {
-          expect(units.head).toMatchObject({ id: 2, name: "Bike" });
-          expect(units.tail).toHaveLength(0);
-        }),
+      queryOneOrMore(Unit, SQL`SELECT * FROM units WHERE id = 2`).map(units => {
+        expect(units.head).toMatchObject({ id: 2, name: "Bike" });
+        expect(units.tail).toHaveLength(0);
+      }),
     ));
 
   test("queryOneOrMore with a query that returns 2 parseable rows returns an array of two parsed types", () =>
     connectionTest(
       queryOneOrMore(Unit, SQL`SELECT * FROM units WHERE name = 'Car' ORDER BY id`)
-        .mapLeft(fail)
         .map(units => units.toArray())
         .map(units => {
           expect(units).toHaveLength(2);
@@ -175,32 +173,28 @@ describe("queries", () => {
 
   test("queryOneOrNone with a query that returns 1 parseable row returns a Some of a single parsed type", () =>
     connectionTest(
-      queryOneOrNone(Unit, SQL`SELECT * FROM units WHERE id = 2`)
-        .mapLeft(fail)
-        .map(unitO => {
-          return unitO.foldL(
-            () => fail(new Error("Query should have returned a Some.")),
-            unit => {
-              expect(unit).toMatchObject({ id: 2, name: "Bike" });
-            },
-          );
-        }),
+      queryOneOrNone(Unit, SQL`SELECT * FROM units WHERE id = 2`).map(unitO => {
+        return unitO.foldL(
+          () => fail(new Error("Query should have returned a Some.")),
+          unit => {
+            expect(unit).toMatchObject({ id: 2, name: "Bike" });
+          },
+        );
+      }),
     ));
 
   test("queryOneOrNone with a query that returns 0 rows returns a None", () =>
     connectionTest(
-      queryOneOrNone(Unit, SQL`SELECT * FROM units WHERE id = 0`)
-        .mapLeft(fail)
-        .map(unitO => {
-          return unitO.foldL(
-            () => {
-              return;
-            },
-            () => {
-              fail(new Error("Query should have returned a None."));
-            },
-          );
-        }),
+      queryOneOrNone(Unit, SQL`SELECT * FROM units WHERE id = 0`).map(unitO => {
+        return unitO.foldL(
+          () => {
+            return;
+          },
+          () => {
+            fail(new Error("Query should have returned a None."));
+          },
+        );
+      }),
     ));
 
   test("queryOneOrNone with a query that returns 2 rows returns PgRowCountError", () =>
@@ -230,32 +224,32 @@ describe("queries", () => {
 
   test("queryAny with a query that returns 0 rows returns an empty array", () =>
     connectionTest(
-      camelCasedQueries
-        .queryAny(Unit, SQL`SELECT * FROM units WHERE id = 0`)
-        .mapLeft(fail)
-        .map(units => {
-          expect(units).toHaveLength(0);
-        }),
+      camelCasedQueries.queryAny(Unit, SQL`SELECT * FROM units WHERE id = 0`).map(units => {
+        expect(units).toHaveLength(0);
+      }),
     ));
 
   test("queryAny with a query that returns 1 rows returns an array of 1 parsed row", () =>
     connectionTest(
-      queryAny(Unit, SQL`SELECT * FROM units WHERE id = 1`)
-        .mapLeft(fail)
-        .map(units => {
-          expect(units).toHaveLength(1);
-          expect(units[0]).toMatchObject({ id: 1, name: "Car" });
-        }),
+      queryAny(Unit, SQL`SELECT * FROM units WHERE id = 1`).map(units => {
+        expect(units).toHaveLength(1);
+        expect(units[0]).toMatchObject({ id: 1, name: "Car" });
+      }),
     ));
 
   test("queryAny with a query that returns 2 rows returns an array of 2 parsed rows", () =>
     connectionTest(
-      queryAny(Unit, SQL`SELECT * FROM units WHERE name = 'Car' ORDER BY id`)
-        .mapLeft(fail)
-        .map(units => {
-          expect(units).toHaveLength(2);
-          expect(units[0]).toMatchObject({ id: 1, name: "Car" });
-          expect(units[1]).toMatchObject({ id: 4, name: "Car" });
-        }),
+      queryAny(Unit, SQL`SELECT * FROM units WHERE name = 'Car' ORDER BY id`).map(units => {
+        expect(units).toHaveLength(2);
+        expect(units[0]).toMatchObject({ id: 1, name: "Car" });
+        expect(units[1]).toMatchObject({ id: 4, name: "Car" });
+      }),
+    ));
+
+  test("queryAny with a json parameter that has a NonEmptyArray inside", () =>
+    connectionTest(
+      queryAny(t.any, SQL`SELECT ${{ foo: new NonEmptyArray(1, [2]) }}::json`).map(results => {
+        expect(results).toEqual([{ json: { foo: [1, 2] } }]);
+      }),
     ));
 });
