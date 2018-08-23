@@ -3,7 +3,6 @@ import { None, Some } from "fp-ts/lib/Option";
 import { mixed } from "io-ts";
 import { forOwn, isEqual, isPlainObject } from "lodash";
 import * as pg from "pg";
-import { inspect } from "util";
 
 const normaliseValue = (value: any): any => {
   if (value == null) {
