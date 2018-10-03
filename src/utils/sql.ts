@@ -70,3 +70,8 @@ export const SQL = (parts: TemplateStringsArray, ...inValues: any[]): pg.QueryCo
 
   return { text: outText, values: outValues };
 };
+
+export const named = (name: string, query: pg.QueryConfig) => ({
+  ...query,
+  name,
+});

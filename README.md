@@ -7,6 +7,9 @@ Typescript wrapper around node-postgres
 :wrench: chore
 :notebook: docs
 
+## v8.1.0
+- :rocket: add `named` function to set the name of a given `SQL`-templated query.
+
 ## v8.0.1
 - :bug: sql fragment parser should unwrap complex types (e.g. NonEmptyArray, Option) before
   passing it to the driver.
