@@ -7,7 +7,10 @@ export class PgPoolCheckoutError extends Error {
   constructor(public readonly error: t.mixed) {
     super("Unable to checkout a connection from the pool.");
 
-    Error.captureStackTrace(this, PgPoolCheckoutError);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, PgPoolCheckoutError);
+    }
+
     this.name = this.constructor.name;
   }
 }
@@ -22,7 +25,10 @@ export class PgPoolCreationError extends Error {
   constructor(public readonly error: t.mixed) {
     super("Unable to create a connection pool.");
 
-    Error.captureStackTrace(this, PgPoolCreationError);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, PgPoolCreationError);
+    }
+
     this.name = this.constructor.name;
   }
 }
@@ -37,7 +43,10 @@ export class PgPoolShutdownError extends Error {
   constructor(public readonly error: t.mixed) {
     super("Unable to shutdown a connection pool.");
 
-    Error.captureStackTrace(this, PgPoolShutdownError);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, PgPoolShutdownError);
+    }
+
     this.name = this.constructor.name;
   }
 }
@@ -52,7 +61,10 @@ export class PgDriverQueryError extends Error {
   constructor(public readonly error: t.mixed, public readonly query: QueryConfig) {
     super("Error raised by node-pg during query execution.");
 
-    Error.captureStackTrace(this, PgDriverQueryError);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, PgDriverQueryError);
+    }
+
     this.name = this.constructor.name;
   }
 }
@@ -72,7 +84,10 @@ export class PgRowCountError extends Error {
   ) {
     super("Query returned an unexpected number of rows.");
 
-    Error.captureStackTrace(this, PgRowCountError);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, PgRowCountError);
+    }
+
     this.name = this.constructor.name;
   }
 }
@@ -91,7 +106,10 @@ export class PgRowValidationError extends Error {
   ) {
     super("Validation of a result row failed.");
 
-    Error.captureStackTrace(this, PgRowValidationError);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, PgRowValidationError);
+    }
+
     this.name = this.constructor.name;
   }
 }
@@ -107,7 +125,10 @@ export class PgTypeParserSetupError extends Error {
   constructor(public readonly error: t.mixed) {
     super("Type parser setup failed.");
 
-    Error.captureStackTrace(this, PgTypeParserSetupError);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, PgTypeParserSetupError);
+    }
+
     this.name = this.constructor.name;
   }
 }
@@ -122,7 +143,10 @@ export class PgTransactionRollbackError extends Error {
   constructor(public readonly rollbackError: t.mixed, public readonly connectionError: t.mixed) {
     super("A ROLLBACK was requested but not successfully completed.");
 
-    Error.captureStackTrace(this, PgTransactionRollbackError);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, PgTransactionRollbackError);
+    }
+
     this.name = this.constructor.name;
   }
 }
@@ -138,7 +162,10 @@ export class PgUnhandledConnectionError extends Error {
   constructor(public readonly error: t.mixed) {
     super("An unhandled error was raised by a connection.");
 
-    Error.captureStackTrace(this, PgUnhandledConnectionError);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, PgUnhandledConnectionError);
+    }
+
     this.name = this.constructor.name;
   }
 }
@@ -153,7 +180,10 @@ export class PgUnhandledPoolError extends Error {
   constructor(public readonly error: t.mixed) {
     super("An unhandled error was raised by a connection pool.");
 
-    Error.captureStackTrace(this, PgUnhandledPoolError);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, PgUnhandledPoolError);
+    }
+
     this.name = this.constructor.name;
   }
 }
