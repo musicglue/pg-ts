@@ -7,27 +7,33 @@ Typescript wrapper around node-postgres
 :wrench: chore
 :notebook: docs
 
-## v8.1.0
-- :rocket: add `named` function to set the name of a given `SQL`-templated query.
+## v9.0.0
+- :boom: An additional `context` param has been added to `connection.query` and `queryX`
+  functions. This is a blob of data that will be attached to query and transaction error instances.
+  The normal use case for this is attaching application context so that error reporting functions
+  can group errors together, or log out additional information about where the error came from.
 
-## v8.0.1
-- :bug: sql fragment parser should unwrap complex types (e.g. NonEmptyArray, Option) before
+### v8.1.0
+- :rocket: Add `named` function to set the name of a given `SQL`-templated query.
+
+### v8.0.1
+- :bug: Sql fragment parser should unwrap complex types (e.g. NonEmptyArray, Option) before
   passing it to the driver.
 
 ## v8.0.0
-- :bug: fix broken nominal typing on classes by changing `public readonly _T = "<class name>"`
+- :bug: Fix broken nominal typing on classes by changing `public readonly _T = "<class name>"`
   to `public readonly _<class name>: void`.
-- :boom: as a result of fixing nominal typing, `makeConnectionPool` now returns an error union
+- :boom: As a result of fixing nominal typing, `makeConnectionPool` now returns an error union
   of `PgPoolCreationError | PgTypeParserSetupError` instead of `PgPoolCreationError`. Other errors
   may occur in application code as a result of the error classes now being correctly differentiated.
 
-## v7.0.0
+## v7.0.0
 - :boom: `fp-ts@1.8.0`
 - :boom: `io-ts@1.3.0`
 - :boom: `monocle-ts@1.2.0`
 
 ### v6.0.1
-- :wrench: add _T symbol to uniquely identify error classes
+- :wrench: Add _T symbol to uniquely identify error classes
 
 ## v6.0.0
 - :boom: Simplified the API by always requiring an environment object in which pg-ts can

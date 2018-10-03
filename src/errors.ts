@@ -58,7 +58,11 @@ export const isPoolShutdownError = (e: t.mixed): e is PgPoolShutdownError =>
 export class PgDriverQueryError extends Error {
   public readonly _PgDriverQueryError: void;
 
-  constructor(public readonly error: t.mixed, public readonly query: QueryConfig) {
+  constructor(
+    public readonly error: t.mixed,
+    public readonly query: QueryConfig,
+    public readonly context: t.mixed,
+  ) {
     super("Error raised by node-pg during query execution.");
 
     if (Error.captureStackTrace) {
@@ -69,8 +73,8 @@ export class PgDriverQueryError extends Error {
   }
 }
 
-export const makeDriverQueryError = (query: QueryConfig) => (e: t.mixed) =>
-  new PgDriverQueryError(e, query);
+export const makeDriverQueryError = (query: QueryConfig, context: t.mixed) => (e: t.mixed) =>
+  new PgDriverQueryError(e, query, context);
 export const isDriverQueryError = (e: t.mixed): e is PgDriverQueryError =>
   e instanceof PgDriverQueryError;
 
@@ -81,6 +85,7 @@ export class PgRowCountError extends Error {
     public readonly query: QueryConfig,
     public readonly expected: string,
     public readonly received: string,
+    public readonly context: t.mixed,
   ) {
     super("Query returned an unexpected number of rows.");
 
@@ -92,8 +97,8 @@ export class PgRowCountError extends Error {
   }
 }
 
-export const makeRowCountError = (query: QueryConfig) => (e: t.mixed) =>
-  new PgDriverQueryError(e, query);
+export const makeRowCountError = (query: QueryConfig, context: t.mixed) => (e: t.mixed) =>
+  new PgDriverQueryError(e, query, context);
 export const isRowCountError = (e: t.mixed): e is PgRowCountError => e instanceof PgRowCountError;
 
 export class PgRowValidationError extends Error {
@@ -103,6 +108,7 @@ export class PgRowValidationError extends Error {
     public readonly type: t.Any,
     public readonly value: t.mixed,
     public readonly errors: t.Errors,
+    public readonly context: t.mixed,
   ) {
     super("Validation of a result row failed.");
 
@@ -114,8 +120,9 @@ export class PgRowValidationError extends Error {
   }
 }
 
-export const makeRowValidationError = (type: t.Any, value: t.mixed) => (errors: t.Errors) =>
-  new PgRowValidationError(type, value, errors);
+export const makeRowValidationError = (type: t.Any, value: t.mixed, context: t.mixed) => (
+  errors: t.Errors,
+) => new PgRowValidationError(type, value, errors, context);
 export const isRowValidationError = (e: t.mixed): e is PgRowValidationError =>
   e instanceof PgRowValidationError;
 
@@ -140,7 +147,11 @@ export const isTypeParserSetupError = (e: t.mixed): e is PgTypeParserSetupError 
 export class PgTransactionRollbackError extends Error {
   public readonly _PgTransactionRollbackError: void;
 
-  constructor(public readonly rollbackError: t.mixed, public readonly connectionError: t.mixed) {
+  constructor(
+    public readonly rollbackError: t.mixed,
+    public readonly connectionError: t.mixed,
+    public readonly context: t.mixed,
+  ) {
     super("A ROLLBACK was requested but not successfully completed.");
 
     if (Error.captureStackTrace) {
@@ -151,8 +162,11 @@ export class PgTransactionRollbackError extends Error {
   }
 }
 
-export const makeTransactionRollbackError = (rollbackError: t.mixed, connectionError: t.mixed) =>
-  new PgTransactionRollbackError(rollbackError, connectionError);
+export const makeTransactionRollbackError = (
+  rollbackError: t.mixed,
+  connectionError: t.mixed,
+  context: t.mixed,
+) => new PgTransactionRollbackError(rollbackError, connectionError, context);
 export const isTransactionRollbackError = (e: t.mixed): e is PgTransactionRollbackError =>
   e instanceof PgTransactionRollbackError;
 

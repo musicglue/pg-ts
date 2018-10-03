@@ -13,7 +13,7 @@ import {
 } from "./errors";
 
 export interface Connection {
-  query(config: pg.QueryConfig): TaskEither<PgDriverQueryError, QueryResult>;
+  query(config: pg.QueryConfig, context: t.mixed): TaskEither<PgDriverQueryError, QueryResult>;
   release(err?: Error): void;
 }
 
@@ -64,6 +64,7 @@ export type TransactionIsolationLevel =
   | "SERIALIZABLE";
 
 export interface TransactionOptions {
+  readonly context: t.mixed;
   readonly deferrable: boolean;
   readonly isolation: TransactionIsolationLevel;
   readonly readOnly: boolean;

@@ -2,6 +2,7 @@ import { Either } from "fp-ts/lib/Either";
 import { constant, identity } from "fp-ts/lib/function";
 import { ask, fromTaskEither, ReaderTaskEither } from "fp-ts/lib/ReaderTaskEither";
 import { fromEither, TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
+import { mixed } from "io-ts";
 import {
   isDriverQueryError,
   isTransactionRollbackError,
@@ -19,6 +20,7 @@ import { eitherToPromise } from "./utils/eitherToPromise";
 import { SQL } from "./utils/sql";
 
 export const defaultTxOptions: TransactionOptions = {
+  context: undefined,
   deferrable: false,
   isolation: "READ COMMITTED",
   readOnly: false,
@@ -31,23 +33,25 @@ const beginTransactionQuery = ({ deferrable, isolation, readOnly }: TransactionO
   ${() => (deferrable ? "DEFERRABLE" : "")}
 `;
 
-const rollbackTransaction = (connection: Connection) => <L>(err: L) =>
+const rollbackTransaction = (connection: Connection, context: mixed) => <L>(err: L) =>
   tryCatch(
     () =>
       connection
-        .query(SQL`ROLLBACK;`)
+        .query(SQL`ROLLBACK;`, context)
         .run()
         .then(eitherToPromise)
-        .catch(rollbackErr => Promise.reject(new PgTransactionRollbackError(rollbackErr, err)))
+        .catch(rollbackErr =>
+          Promise.reject(new PgTransactionRollbackError(rollbackErr, err, context)),
+        )
         .then(() => Promise.reject(err)),
     e => (isTransactionRollbackError(e) ? e : (e as L)),
   );
 
-const commitTransaction = (connection: Connection) => <A>(a: A) =>
+const commitTransaction = (connection: Connection, context: mixed) => <A>(a: A) =>
   tryCatch(
     () =>
       connection
-        .query(SQL`COMMIT;`)
+        .query(SQL`COMMIT;`, context)
         .run()
         .then(eitherToPromise)
         .then(constant(a)),
@@ -60,7 +64,7 @@ const executeTransaction = <L, A>(
   program: () => Promise<Either<L, A>>,
 ): TaskEither<TransactionError<L>, A> =>
   connection
-    .query(beginTransactionQuery(opts))
+    .query(beginTransactionQuery(opts), opts.context)
     .mapLeft<TransactionError<L>>(identity)
     .chain(() =>
       tryCatch(
@@ -68,8 +72,8 @@ const executeTransaction = <L, A>(
           program().then(programE =>
             programE
               .fold<TaskEither<TransactionError<L>, A>>(
-                rollbackTransaction(connection),
-                commitTransaction(connection),
+                rollbackTransaction(connection, opts.context),
+                commitTransaction(connection, opts.context),
               )
               .run(),
           ),

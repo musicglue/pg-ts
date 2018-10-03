@@ -21,27 +21,28 @@ import {
 } from "./types";
 import { defaultCamelCaser } from "./utils/camelify";
 
-const executeQuery = (query: QueryConfig) => (connection: Connection) => connection.query(query);
+const executeQuery = (query: QueryConfig, context: t.mixed) => (connection: Connection) =>
+  connection.query(query, context);
 
 const isNoneResult: Predicate<QueryResult> = ({ rows }) => rows.length === 0;
 const isNonEmptyResult: Predicate<QueryResult> = ({ rows }) => rows.length > 0;
 const isOneResult: Predicate<QueryResult> = ({ rows }) => rows.length === 1;
 const isOneOrNoneResult: Predicate<QueryResult> = or(isNoneResult, isOneResult);
 
-const expectedAtLeastOneErrorFailure = (query: QueryConfig) =>
-  new PgRowCountError(query, ">= 1", "0");
+const expectedAtLeastOneErrorFailure = (query: QueryConfig, context: t.mixed) =>
+  new PgRowCountError(query, ">= 1", "0", context);
 
-const expectedNoneFoundSomeErrorFailure = (query: QueryConfig) =>
-  new PgRowCountError(query, "0", ">= 1");
+const expectedNoneFoundSomeErrorFailure = (query: QueryConfig, context: t.mixed) =>
+  new PgRowCountError(query, "0", ">= 1", context);
 
-const expectedOneFoundManyErrorFailure = (query: QueryConfig) =>
-  new PgRowCountError(query, "1", "> 1");
+const expectedOneFoundManyErrorFailure = (query: QueryConfig, context: t.mixed) =>
+  new PgRowCountError(query, "1", "> 1", context);
 
-const expectedOneFoundNoneErrorFailure = (query: QueryConfig) =>
-  new PgRowCountError(query, "1", "0");
+const expectedOneFoundNoneErrorFailure = (query: QueryConfig, context: t.mixed) =>
+  new PgRowCountError(query, "1", "0", context);
 
-const expectedOneOrNoneErrorFailure = (query: QueryConfig) =>
-  new PgRowCountError(query, "0 or 1", "> 1");
+const expectedOneOrNoneErrorFailure = (query: QueryConfig, context: t.mixed) =>
+  new PgRowCountError(query, "0 or 1", "> 1", context);
 
 export type QueryAnyError = PgDriverQueryError | PgRowValidationError;
 export type QueryNoneError = PgDriverQueryError | PgRowCountError;
@@ -52,28 +53,30 @@ export type QueryOneOrNoneError = PgDriverQueryError | PgRowValidationError | Pg
 const queryAny = (transformer: RowTransformer = identity) => <A = any>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
+  context?: t.mixed,
 ): ReaderTaskEither<ConnectedEnvironment, QueryAnyError, A[]> =>
   ask<ConnectedEnvironment, QueryAnyError>()
     .map(connectionLens.get)
-    .map(executeQuery(query))
+    .map(executeQuery(query, context))
     .chain(fromTaskEither)
     .map(({ rows }) => transformer(rows))
     .map(rows =>
       t
         .array(type)
         .decode(rows)
-        .mapLeft(makeRowValidationError(type, rows)),
+        .mapLeft(makeRowValidationError(type, rows, context)),
     )
     .chain(fromEither);
 
 const queryNone = (
   query: QueryConfig,
+  context?: t.mixed,
 ): ReaderTaskEither<ConnectedEnvironment, QueryNoneError, void> =>
   ask<ConnectedEnvironment, QueryNoneError>()
     .map(connectionLens.get)
-    .map(executeQuery(query))
+    .map(executeQuery(query, context))
     .chain(fromTaskEither)
-    .map(fromPredicate(isNoneResult, constant(expectedNoneFoundSomeErrorFailure(query))))
+    .map(fromPredicate(isNoneResult, constant(expectedNoneFoundSomeErrorFailure(query, context))))
     .chain(fromEither)
     .map<void>(() => {
       return;
@@ -82,40 +85,42 @@ const queryNone = (
 const queryOne = (transformer: RowTransformer = identity) => <A = any>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
+  context?: t.mixed,
 ): ReaderTaskEither<ConnectedEnvironment, QueryOneError, A> =>
   ask<ConnectedEnvironment, QueryOneError>()
     .map(connectionLens.get)
-    .map(executeQuery(query))
+    .map(executeQuery(query, context))
     .chain(fromTaskEither)
     .map(
       fromPredicate(isOneResult, result =>
         fromPredicate(isNoneResult, identity)(result).fold(
-          constant(expectedOneFoundManyErrorFailure(query)),
-          constant(expectedOneFoundNoneErrorFailure(query)),
+          constant(expectedOneFoundManyErrorFailure(query, context)),
+          constant(expectedOneFoundNoneErrorFailure(query, context)),
         ),
       ),
     )
     .chain(fromEither)
     .map(({ rows }) => transformer(rows)[0])
-    .map(row => type.decode(row).mapLeft(makeRowValidationError(type, row)))
+    .map(row => type.decode(row).mapLeft(makeRowValidationError(type, row, context)))
     .chain(fromEither);
 
 const queryOneOrMore = (transformer: RowTransformer = identity) => <A = any>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
+  context?: t.mixed,
 ): ReaderTaskEither<ConnectedEnvironment, QueryOneOrMoreError, NonEmptyArray<A>> =>
   ask<ConnectedEnvironment, QueryOneOrMoreError>()
     .map(connectionLens.get)
-    .map(executeQuery(query))
+    .map(executeQuery(query, context))
     .chain(fromTaskEither)
-    .map(fromPredicate(isNonEmptyResult, constant(expectedAtLeastOneErrorFailure(query))))
+    .map(fromPredicate(isNonEmptyResult, constant(expectedAtLeastOneErrorFailure(query, context))))
     .chain(fromEither)
     .map(({ rows }) => transformer(rows))
     .map(rows =>
       t
         .array(type)
         .decode(rows)
-        .mapLeft(makeRowValidationError(type, rows)),
+        .mapLeft(makeRowValidationError(type, rows, context)),
     )
     .chain(fromEither)
     .map(rows => new NonEmptyArray(rows[0], rows.slice(1)));
@@ -123,12 +128,13 @@ const queryOneOrMore = (transformer: RowTransformer = identity) => <A = any>(
 const queryOneOrNone = (transformer: RowTransformer = identity) => <A = any>(
   type: t.Type<A, any, t.mixed>,
   query: QueryConfig,
+  context?: t.mixed,
 ): ReaderTaskEither<ConnectedEnvironment, QueryOneOrNoneError, Option<A>> =>
   ask<ConnectedEnvironment, QueryOneOrNoneError>()
     .map(connectionLens.get)
-    .map(executeQuery(query))
+    .map(executeQuery(query, context))
     .chain(fromTaskEither)
-    .map(fromPredicate(isOneOrNoneResult, constant(expectedOneOrNoneErrorFailure(query))))
+    .map(fromPredicate(isOneOrNoneResult, constant(expectedOneOrNoneErrorFailure(query, context))))
     .chain(fromEither)
     .map(({ rows }) => transformer(rows))
     .map(rows =>
