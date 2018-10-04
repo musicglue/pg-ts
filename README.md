@@ -7,6 +7,9 @@ Typescript wrapper around node-postgres
 :wrench: chore
 :notebook: docs
 
+#### v9.0.1
+- :bug: Prevent array positional parameters from being deduped.
+
 ## v9.0.0
 - :boom: An additional `context` param has been added to `connection.query` and `queryX`
   functions. This is a blob of data that will be attached to query and transaction error instances.

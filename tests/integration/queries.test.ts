@@ -252,4 +252,11 @@ describe("queries", () => {
         expect(results).toEqual([{ json: { foo: [1, 2] } }]);
       }),
     ));
+
+  test("queryAny with two empty arrays with different type assertions", () =>
+    connectionTest(
+      queryAny(t.any, SQL`SELECT ${[]}::uuid[] AS a, ${[]}::int[] as b`).map(results => {
+        expect(results).toEqual([{ a: [], b: [] }]);
+      }),
+    ));
 });

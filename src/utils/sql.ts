@@ -1,7 +1,7 @@
 import { NonEmptyArray } from "fp-ts/lib/NonEmptyArray";
 import { None, Some } from "fp-ts/lib/Option";
 import { mixed } from "io-ts";
-import { forOwn, isEqual, isPlainObject } from "lodash";
+import { forOwn, isPlainObject, isEqual } from "lodash";
 import * as pg from "pg";
 
 const normaliseValue = (value: any): any => {
@@ -52,7 +52,9 @@ export const SQL = (parts: TemplateStringsArray, ...inValues: any[]): pg.QueryCo
       return `NULL`;
     }
 
-    const found = outValues.findIndex(o => isEqual(o, normalisedValue));
+    const found = outValues.findIndex(
+      o => !Array.isArray(normalisedValue) && isEqual(o, normalisedValue),
+    );
 
     if (found > -1) {
       return `$${found + 1}`;

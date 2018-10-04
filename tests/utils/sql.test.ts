@@ -117,22 +117,22 @@ describe("Utils", () => {
           it("matches empty arrays", () => {
             value = [];
             res = SQL`${value} = ${value}`;
-            expect(res).toHaveProperty("text", "$1 = $1");
-            expect(res).toHaveProperty("values", [value]);
+            expect(res).toHaveProperty("text", "$1 = $2");
+            expect(res).toHaveProperty("values", [value, value]);
           });
 
           it("matches populated arrays", () => {
             value = [10];
             res = SQL`${value} = ${value}`;
-            expect(res).toHaveProperty("text", "$1 = $1");
-            expect(res).toHaveProperty("values", [value]);
+            expect(res).toHaveProperty("text", "$1 = $2");
+            expect(res).toHaveProperty("values", [value, value]);
           });
 
           it("matches nested arrays", () => {
             value = [[10]];
             res = SQL`${value} = ${value}`;
-            expect(res).toHaveProperty("text", "$1 = $1");
-            expect(res).toHaveProperty("values", [value]);
+            expect(res).toHaveProperty("text", "$1 = $2");
+            expect(res).toHaveProperty("values", [value, value]);
           });
         });
 
