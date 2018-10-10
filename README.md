@@ -7,6 +7,11 @@ Typescript wrapper around node-postgres
 :wrench: chore
 :notebook: docs
 
+#### v9.0.2
+- :bug: If a `queryOneOrNone` was executed with SQL that selected insufficient columns to fully
+  populate the row type, it would erroneously return `None`. Fixed now to return the expected
+  `PgRowValidationError` type.
+
 #### v9.0.1
 - :bug: Prevent array positional parameters from being deduped.
 

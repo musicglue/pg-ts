@@ -1,4 +1,4 @@
-import { Either, left, right } from "fp-ts/lib/Either";
+import { Either, either, left, right } from "fp-ts/lib/Either";
 import { NonEmptyArray } from "fp-ts/lib/NonEmptyArray";
 import { ask, fromReader, fromTaskEither } from "fp-ts/lib/ReaderTaskEither";
 import { TaskEither } from "fp-ts/lib/TaskEither";
@@ -9,6 +9,7 @@ import {
   isRowCountError,
   isRowValidationError,
   PgRowCountError,
+  PgRowValidationError,
   SQL,
 } from "../../src";
 import { fromTask } from "../../src/utils/taskEither";
@@ -258,5 +259,17 @@ describe("queries", () => {
       queryAny(t.any, SQL`SELECT ${[]}::uuid[] AS a, ${[]}::int[] as b`).map(results => {
         expect(results).toEqual([{ a: [], b: [] }]);
       }),
+    ));
+
+  test("queryOneOrNone with a query that does not select enough columns to satisfy the row type", () =>
+    connectionTest(
+      fromReader(
+        queryOneOrNone(Unit, SQL`SELECT name FROM units LIMIT 1`).fold(
+          error => expect(error).toBeInstanceOf(PgRowValidationError),
+          fail,
+        ),
+      )
+        .map(a => new TaskEither(a.map(either.of)))
+        .chain(fromTaskEither),
     ));
 });
