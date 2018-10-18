@@ -63,7 +63,9 @@ export class PgDriverQueryError extends Error {
     public readonly query: QueryConfig,
     public readonly context: t.mixed,
   ) {
-    super("Error raised by node-pg during query execution.");
+    super(
+      error instanceof Error ? error.message : "Error raised by node-pg during query execution.",
+    );
 
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, PgDriverQueryError);
