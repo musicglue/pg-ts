@@ -19,13 +19,22 @@ import { getPoolConfig, truncate } from "./db";
 
 const { queryNone } = camelCasedQueries;
 
+class EnvironmentError extends Error {
+  public name = "EnvironmentError";
+  constructor(msg: string) {
+    super(msg);
+  }
+}
+
 export const connectionTest = <L, A>(
   program: ReaderTaskEither<ConnectedEnvironment, L, A>,
 ): Promise<A> => {
   const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
-    throw new Error("DATABASE_URL environment variable not found");
+    return eitherToPromise(
+      left(new EnvironmentError("DATABASE_URL environment variable not found")),
+    );
   }
 
   const createTable = queryNone(

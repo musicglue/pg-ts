@@ -51,8 +51,8 @@ export const makeConnectionPool = (
     );
 
     return pool;
-  }, makePoolCreationError).mapLeft(
-    error => (isPoolCreationError(error) ? error : makePoolCreationError(error)),
+  }, makePoolCreationError).mapLeft(error =>
+    isPoolCreationError(error) ? error : makePoolCreationError(error),
   );
 
   return fromIOEither(poolIo)

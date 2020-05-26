@@ -1,6 +1,7 @@
 import { constant } from "fp-ts/lib/function";
 import { tryCatch } from "fp-ts/lib/TaskEither";
 import * as pg from "pg";
+import { parse } from "postgres-array";
 import { makeTypeParserSetupError } from "./errors";
 import { parseInterval } from "./pgTypes/interval";
 import { TypeParser, TypeParsers } from "./types";
@@ -18,8 +19,7 @@ const typeQuery = (name: string) => SQL`
   WHERE typname = ${name}
   ORDER BY oid;`;
 
-const arrayParser = (typeParser: TypeParser<any>) => (input: string) =>
-  pg.types.arrayParser.create(input, typeParser).parse();
+const arrayParser = (typeParser: TypeParser<any>) => (input: string) => parse(input, typeParser);
 
 export const setupParsers = (pool: pg.Pool) => (parsers: TypeParsers) => {
   const parserSet: TypeParsers = { interval: parseInterval, ...parsers };
