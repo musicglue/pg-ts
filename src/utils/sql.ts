@@ -1,7 +1,7 @@
 import { NonEmptyArray } from "fp-ts/lib/NonEmptyArray";
 import { None, Some } from "fp-ts/lib/Option";
 import { mixed } from "io-ts";
-import { forOwn, isPlainObject, isEqual } from "lodash";
+import { forOwn, isEqual, isPlainObject } from "lodash";
 import * as pg from "pg";
 
 const normaliseValue = (value: any): any => {
