@@ -7,7 +7,7 @@ Typescript wrapper around node-postgres
 :wrench: chore
 :notebook: docs
 
-#### vNext
+#### v10.0.0
 
 - :wrench: Dependency updates
 
