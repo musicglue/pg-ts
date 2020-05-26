@@ -1,8 +1,8 @@
 import * as pg from "pg";
+import { parse } from "postgres-array";
 import { SQL } from ".";
-import postgresToISO from "./pgTypes/interval";
-
 import { PgType, QueryResult, TypeParser, TypeParsers } from ".";
+import postgresToISO from "./pgTypes/interval";
 
 const typeQuery = (name: string) => SQL`
 SELECT typname, oid, typarray
@@ -10,8 +10,7 @@ FROM pg_type
 WHERE typname = ${name}
 ORDER BY oid;`;
 
-const arrayParser = (typeParser: TypeParser<any>) => (input: string) =>
-  pg.types.arrayParser.create(input, typeParser).parse();
+const arrayParser = (typeParser: TypeParser<any>) => (input: string) => parse(input, typeParser);
 
 // tslint:disable-next-line:ban-types
 const map = <T, V>(x: (i: T, idx: number, obj: T[]) => V) => (y: T[]): V[] => y.map(x);
