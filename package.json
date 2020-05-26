@@ -9,8 +9,8 @@
   "license": "MIT",
   "scripts": {
     "build": "rm -rf dist/  && tsc",
-    "format": "prettier --write --list-different --parser ${npm_package_prettier_parser} --trailing-comma ${npm_package_prettier_trailingComma} --print-width ${npm_package_prettier_printWidth} 'src/**/*.ts'",
-    "prepublishOnly": "npm run build",
+    "format": "prettier --write --list-different --parser ${npm_package_prettier_parser} --trailing-comma ${npm_package_prettier_trailingComma} --print-width ${npm_package_prettier_printWidth} --arrow-parens ${npm_package_prettier_arrow_parens} 'src/**/*.ts'",
+    "p3epublishOnly": "npm run build",
     "test": "NODE_ENV=test jest --runInBand"
   },
   "jest": {
@@ -51,13 +51,14 @@
     "@types/lodash": "^4.14.99",
     "@types/pg": "^7.4.1",
     "jest": "^22.1.4",
-    "prettier": "^1.10.2",
+    "prettier": "^2.0.5",
     "ts-jest": "^22.0.2",
     "ts-node": "^4.1.0",
     "tslint": "^5.9.1",
     "typescript": "^2.7.1"
   },
   "prettier": {
+    "arrowParens": "avoid",
     "parser": "typescript",
     "printWidth": 100,
     "trailingComma": "all"
